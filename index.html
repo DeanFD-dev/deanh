@@ -1,10 +1,325 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>My Site</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Time Log">
+<meta name="theme-color" content="#0f172a">
+<title>Time Log</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    background: #0f172a; color: #e2e8f0;
+    min-height: 100vh; min-height: 100dvh;
+    overscroll-behavior-y: contain;
+  }
+  body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  .app { max-width: 600px; margin: 0 auto; padding: 16px 16px 140px; }
+  .header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; padding-top: 8px; }
+  .date { font-size: 14px; color: #94a3b8; font-weight: 500; }
+  .total { font-size: 14px; color: #94a3b8; }
+  .total strong { color: #f1f5f9; font-weight: 600; }
+  .tabs { display: flex; gap: 4px; background: #1e293b; border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+  .tab { flex: 1; background: transparent; border: none; color: #94a3b8; padding: 8px 12px; border-radius: 7px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .tab.active { background: #334155; color: #f1f5f9; }
+  .entries { display: flex; flex-direction: column; gap: 8px; }
+  .empty { text-align: center; padding: 60px 20px; color: #64748b; font-size: 15px; line-height: 1.5; }
+  .entry { background: #1e293b; border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .entry-time { font-size: 13px; font-weight: 600; color: #38bdf8; min-width: 64px; padding-top: 1px; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .entry-text { flex: 1; font-size: 15px; line-height: 1.4; color: #e2e8f0; word-wrap: break-word; }
+  .entry-delete { background: transparent; border: none; color: #64748b; font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
+  .entry-delete:active { color: #ef4444; }
+  .entry input.edit-input { flex: 1; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px; padding: 6px 8px; font-size: 15px; font-family: inherit; }
+  .archive-day { background: #1e293b; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .archive-day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .archive-date { font-size: 15px; font-weight: 600; color: #f1f5f9; }
+  .archive-meta { font-size: 13px; color: #94a3b8; }
+  .archive-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .archive-btn { flex: 1; background: #334155; border: none; color: #e2e8f0; padding: 8px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .archive-btn.danger { background: #450a0a; color: #fca5a5; }
+  .action-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(to top, #0f172a 70%, rgba(15,23,42,0)); display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .mic-button { width: 72px; height: 72px; border-radius: 50%; border: none; background: #38bdf8; color: #0f172a; font-size: 32px; cursor: pointer; box-shadow: 0 8px 24px rgba(56,189,248,0.35); transition: transform 0.1s ease, background 0.15s ease; display: flex; align-items: center; justify-content: center; }
+  .mic-button:active { transform: scale(0.95); }
+  .mic-button.listening { background: #ef4444; animation: pulse 1.2s ease-in-out infinite; box-shadow: 0 8px 24px rgba(239,68,68,0.4); }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+  .secondary-actions { display: flex; gap: 8px; width: 100%; max-width: 400px; }
+  .secondary-btn { flex: 1; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .secondary-btn.primary { background: #334155; border-color: #475569; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: flex-end; justify-content: center; z-index: 100; }
+  .modal-backdrop.show { display: flex; }
+  .modal { background: #1e293b; width: 100%; max-width: 500px; border-radius: 16px 16px 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); animation: slideUp 0.2s ease-out; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal h3 { margin: 0 0 12px; font-size: 16px; color: #94a3b8; font-weight: 500; }
+  .modal-input { width: 100%; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 10px; padding: 12px; font-size: 16px; font-family: inherit; margin-bottom: 12px; resize: none; min-height: 80px; }
+  .modal-time-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+  .modal-time-row label { font-size: 14px; color: #94a3b8; }
+  .modal-time-row input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 15px; font-family: inherit; }
+  .modal-buttons { display: flex; gap: 8px; }
+  .modal-btn { flex: 1; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .modal-btn.cancel { background: #334155; color: #e2e8f0; }
+  .modal-btn.confirm { background: #38bdf8; color: #0f172a; }
+  .modal-btn.redo { background: #475569; color: #e2e8f0; }
+  .toast { position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-100px); background: #1e293b; color: #e2e8f0; padding: 10px 16px; border-radius: 10px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.25s ease; z-index: 200; border: 1px solid #334155; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: #ef4444; }
+</style>
 </head>
 <body>
-  <h1>Hello from my iPhone!</h1>
-  <p>Placeholder</p>
+<div class="app">
+  <div class="header">
+    <div class="date" id="date"></div>
+    <div class="total">Today: <strong id="total">—</strong></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-view="today">Today</button>
+    <button class="tab" data-view="history">History</button>
+  </div>
+  <div id="today-view"><div class="entries" id="entries"></div></div>
+  <div id="history-view" style="display: none;"><div id="archive-list"></div></div>
+</div>
+<div class="action-bar" id="action-bar">
+  <button class="mic-button" id="mic" aria-label="Record voice entry">🎤</button>
+  <div class="secondary-actions">
+    <button class="secondary-btn" id="manual-btn">Type entry</button>
+    <button class="secondary-btn primary" id="export-btn">Export day</button>
+  </div>
+</div>
+<div class="modal-backdrop" id="confirm-modal">
+  <div class="modal">
+    <h3>I heard:</h3>
+    <textarea class="modal-input" id="confirm-text"></textarea>
+    <div class="modal-time-row"><label>Time:</label><input type="time" id="confirm-time"></div>
+    <div class="modal-buttons">
+      <button class="modal-btn cancel" id="confirm-cancel">Cancel</button>
+      <button class="modal-btn redo" id="confirm-redo">🎤 Redo</button>
+      <button class="modal-btn confirm" id="confirm-save">Log it</button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="manual-modal">
+  <div class="modal">
+    <h3>Add entry</h3>
+    <textarea class="modal-input" id="manual-text" placeholder="What are you logging?"></textarea>
+    <div class="modal-time-row"><label>Time:</label><input type="time" id="manual-time"></div>
+    <div class="modal-buttons">
+      <button class="modal-btn cancel" id="manual-cancel">Cancel</button>
+      <button class="modal-btn confirm" id="manual-save">Log it</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+  const memStore = {};
+  const storage = {
+    get(key) { try { const v = localStorage.getItem(key); return v === null ? null : JSON.parse(v); } catch (e) { return memStore[key] === undefined ? null : memStore[key]; } },
+    set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { memStore[key] = val; } }
+  };
+  const TODAY_KEY = 'timelog_today', TODAY_DATE_KEY = 'timelog_today_date', ARCHIVE_KEY = 'timelog_archive';
+  let todayEntries = storage.get(TODAY_KEY) || [];
+  let todayDate = storage.get(TODAY_DATE_KEY) || todayString();
+  let archive = storage.get(ARCHIVE_KEY) || [];
+  if (todayDate !== todayString() && todayEntries.length > 0) {
+    archive.unshift({ date: todayDate, entries: todayEntries });
+    storage.set(ARCHIVE_KEY, archive);
+    todayEntries = []; todayDate = todayString();
+    storage.set(TODAY_KEY, todayEntries); storage.set(TODAY_DATE_KEY, todayDate);
+  } else if (todayDate !== todayString()) {
+    todayDate = todayString(); storage.set(TODAY_DATE_KEY, todayDate);
+  }
+  function todayString() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function nowTimeString() { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function formatTime12(t) { const [h,m] = t.split(':').map(Number); const period = h>=12?'PM':'AM'; const h12 = h%12||12; return h12+':'+pad(m)+' '+period; }
+  function formatDateLong(dateStr) { const [y,m,d] = dateStr.split('-').map(Number); const dt = new Date(y, m-1, d); return dt.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' }); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+  function totalDuration(entries) {
+    if (entries.length < 2) return null;
+    const sorted = [...entries].sort((a,b) => a.time.localeCompare(b.time));
+    const [h1,m1] = sorted[0].time.split(':').map(Number);
+    const [h2,m2] = sorted[sorted.length-1].time.split(':').map(Number);
+    const mins = (h2*60+m2) - (h1*60+m1);
+    if (mins <= 0) return null;
+    const h = Math.floor(mins/60), m = mins%60;
+    return (h>0 ? h+'h ' : '') + m + 'm';
+  }
+  function saveToday() { storage.set(TODAY_KEY, todayEntries); storage.set(TODAY_DATE_KEY, todayDate); }
+  function saveArchive() { storage.set(ARCHIVE_KEY, archive); }
+  const entriesEl = document.getElementById('entries');
+  const archiveListEl = document.getElementById('archive-list');
+  const dateEl = document.getElementById('date');
+  const totalEl = document.getElementById('total');
+  function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function render() {
+    dateEl.textContent = formatDateLong(todayDate);
+    const total = totalDuration(todayEntries);
+    totalEl.textContent = total || (todayEntries.length === 0 ? '—' : 'logging');
+    if (todayEntries.length === 0) {
+      entriesEl.innerHTML = '<div class="empty">No entries yet today.<br>Tap the mic to start logging.</div>';
+    } else {
+      const sorted = [...todayEntries].sort((a,b) => a.time.localeCompare(b.time));
+      entriesEl.innerHTML = '';
+      sorted.forEach(entry => {
+        const el = document.createElement('div');
+        el.className = 'entry'; el.dataset.id = entry.id;
+        el.innerHTML = `<div class="entry-time" data-action="edit-time">${formatTime12(entry.time)}</div><div class="entry-text" data-action="edit-text">${escapeHtml(entry.text)}</div><button class="entry-delete" data-action="delete" aria-label="Delete">×</button>`;
+        entriesEl.appendChild(el);
+      });
+    }
+    renderArchive();
+  }
+  function renderArchive() {
+    if (archive.length === 0) { archiveListEl.innerHTML = '<div class="empty">No archived days yet.<br>Past days will appear here after export.</div>'; return; }
+    archiveListEl.innerHTML = '';
+    archive.forEach((day, idx) => {
+      const total = totalDuration(day.entries);
+      const el = document.createElement('div');
+      el.className = 'archive-day';
+      el.innerHTML = `<div class="archive-day-header"><div class="archive-date">${formatDateLong(day.date)}</div><div class="archive-meta">${day.entries.length} entries${total ? ' · ' + total : ''}</div></div><div class="archive-actions"><button class="archive-btn" data-archive-action="export" data-idx="${idx}">Re-export</button><button class="archive-btn danger" data-archive-action="delete" data-idx="${idx}">Delete</button></div>`;
+      archiveListEl.appendChild(el);
+    });
+  }
+  entriesEl.addEventListener('click', (e) => {
+    const entryEl = e.target.closest('.entry'); if (!entryEl) return;
+    const id = entryEl.dataset.id; const action = e.target.dataset.action;
+    const entry = todayEntries.find(x => x.id === id); if (!entry) return;
+    if (action === 'delete') { todayEntries = todayEntries.filter(x => x.id !== id); saveToday(); render(); }
+    else if (action === 'edit-time') {
+      const input = document.createElement('input');
+      input.type = 'time'; input.value = entry.time;
+      input.style.cssText = 'background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:6px;padding:4px 6px;font-size:13px;font-family:inherit;min-width:64px;';
+      e.target.replaceWith(input); input.focus();
+      const commit = () => { if (input.value) { entry.time = input.value; saveToday(); } render(); };
+      input.addEventListener('blur', commit); input.addEventListener('change', commit);
+    } else if (action === 'edit-text') {
+      const input = document.createElement('input');
+      input.className = 'edit-input'; input.type = 'text'; input.value = entry.text;
+      e.target.replaceWith(input); input.focus(); input.setSelectionRange(input.value.length, input.value.length);
+      const commit = () => { const v = input.value.trim(); if (v) { entry.text = v; saveToday(); } render(); };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); } if (ev.key === 'Escape') render(); });
+    }
+  });
+  function addEntry(text, time) {
+    todayEntries.push({ id: uid(), text: text.trim(), time: time || nowTimeString() });
+    saveToday(); render(); showToast('Logged');
+  }
+  const manualModal = document.getElementById('manual-modal');
+  const manualText = document.getElementById('manual-text');
+  const manualTime = document.getElementById('manual-time');
+  document.getElementById('manual-btn').addEventListener('click', () => {
+    manualText.value = ''; manualTime.value = nowTimeString();
+    manualModal.classList.add('show'); setTimeout(() => manualText.focus(), 100);
+  });
+  document.getElementById('manual-cancel').addEventListener('click', () => manualModal.classList.remove('show'));
+  document.getElementById('manual-save').addEventListener('click', () => {
+    const text = manualText.value.trim(); if (!text) return;
+    addEntry(text, manualTime.value || nowTimeString());
+    manualModal.classList.remove('show');
+  });
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micBtn = document.getElementById('mic');
+  const confirmModal = document.getElementById('confirm-modal');
+  const confirmText = document.getElementById('confirm-text');
+  const confirmTime = document.getElementById('confirm-time');
+  let recognition = null, listening = false;
+  if (!SpeechRecognition) { micBtn.disabled = true; micBtn.style.opacity = '0.5'; micBtn.title = 'Voice not supported'; }
+  function startListening() {
+    if (!SpeechRecognition || listening) return;
+    recognition = new SpeechRecognition();
+    recognition.lang = navigator.language || 'en-US';
+    recognition.interimResults = false; recognition.maxAlternatives = 1; recognition.continuous = false;
+    listening = true; micBtn.classList.add('listening'); micBtn.textContent = '●';
+    recognition.onresult = (event) => { const transcript = event.results[0][0].transcript; stopListening(); openConfirm(transcript); };
+    recognition.onerror = (event) => {
+      stopListening();
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') showToast('Microphone permission denied', true);
+      else if (event.error === 'no-speech') showToast("Didn't catch that", true);
+      else showToast('Voice error: ' + event.error, true);
+    };
+    recognition.onend = () => stopListening();
+    try { recognition.start(); } catch (e) { stopListening(); showToast('Could not start mic', true); }
+  }
+  function stopListening() {
+    listening = false; micBtn.classList.remove('listening'); micBtn.textContent = '🎤';
+    if (recognition) { try { recognition.stop(); } catch (e) {} recognition = null; }
+  }
+  micBtn.addEventListener('click', () => { if (listening) stopListening(); else startListening(); });
+  function openConfirm(text) { confirmText.value = text; confirmTime.value = nowTimeString(); confirmModal.classList.add('show'); }
+  document.getElementById('confirm-cancel').addEventListener('click', () => confirmModal.classList.remove('show'));
+  document.getElementById('confirm-redo').addEventListener('click', () => { confirmModal.classList.remove('show'); setTimeout(startListening, 200); });
+  document.getElementById('confirm-save').addEventListener('click', () => {
+    const text = confirmText.value.trim(); if (!text) return;
+    addEntry(text, confirmTime.value || nowTimeString());
+    confirmModal.classList.remove('show');
+  });
+  function csvCell(v) { const s = String(v); if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"'; return s; }
+  function buildCSV(date, entries) {
+    const sorted = [...entries].sort((a,b) => a.time.localeCompare(b.time));
+    const rows = [['Date', 'Time', 'Entry']];
+    sorted.forEach(e => rows.push([date, formatTime12(e.time), e.text]));
+    return rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+  }
+  async function shareCSV(date, entries) {
+    const csv = buildCSV(date, entries);
+    const filename = 'timelog-' + date + '.csv';
+    const file = new File([csv], filename, { type: 'text/csv' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ title: 'Time Log ' + date, text: 'Time log for ' + formatDateLong(date), files: [file] }); return true; }
+      catch (e) { if (e.name === 'AbortError') return false; }
+    }
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return true;
+  }
+  document.getElementById('export-btn').addEventListener('click', async () => {
+    if (todayEntries.length === 0) { showToast('Nothing to export yet', true); return; }
+    const ok = await shareCSV(todayDate, todayEntries);
+    if (ok) {
+      archive.unshift({ date: todayDate, entries: todayEntries });
+      saveArchive();
+      todayEntries = []; todayDate = todayString();
+      saveToday(); render();
+      showToast('Exported & archived');
+    }
+  });
+  archiveListEl.addEventListener('click', async (e) => {
+    const action = e.target.dataset.archiveAction; if (!action) return;
+    const idx = parseInt(e.target.dataset.idx, 10);
+    const day = archive[idx]; if (!day) return;
+    if (action === 'export') await shareCSV(day.date, day.entries);
+    else if (action === 'delete') {
+      if (confirm('Delete archived log for ' + formatDateLong(day.date) + '?')) {
+        archive.splice(idx, 1); saveArchive(); renderArchive();
+      }
+    }
+  });
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const view = t.dataset.view;
+      document.getElementById('today-view').style.display = view === 'today' ? '' : 'none';
+      document.getElementById('history-view').style.display = view === 'history' ? '' : 'none';
+      document.getElementById('action-bar').style.display = view === 'today' ? '' : 'none';
+    });
+  });
+  let toastTimer;
+  function showToast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.toggle('error', !!isError);
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+  render();
+</script>
 </body>
 </html>
