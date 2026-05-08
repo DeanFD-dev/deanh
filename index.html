@@ -220,57 +220,142 @@
     addEntry(text, manualTime.value || nowTimeString());
     manualModal.classList.remove('show');
   });
+
+  // ============ Voice recognition (iOS-hardened) ============
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const micBtn = document.getElementById('mic');
   const confirmModal = document.getElementById('confirm-modal');
   const confirmText = document.getElementById('confirm-text');
   const confirmTime = document.getElementById('confirm-time');
-  let recognition = null, listening = false;
-  if (!SpeechRecognition) { micBtn.disabled = true; micBtn.style.opacity = '0.5'; micBtn.title = 'Voice not supported'; }
+  let recognition = null;
+  let listening = false;
   let lastTranscript = '';
+  let listenTimeout = null;
+  let resultReceived = false;
+
+  if (!SpeechRecognition) {
+    micBtn.disabled = true;
+    micBtn.style.opacity = '0.5';
+  }
+
   function startListening() {
-    if (!SpeechRecognition || listening) return;
-    recognition = new SpeechRecognition();
+    if (!SpeechRecognition) {
+      showToast('Voice not supported on this device', true);
+      return;
+    }
+    if (listening) return;
+
+    try {
+      recognition = new SpeechRecognition();
+    } catch (e) {
+      showToast('Could not create recognizer', true);
+      return;
+    }
+
     recognition.lang = navigator.language || 'en-US';
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
     recognition.continuous = false;
+
     lastTranscript = '';
+    resultReceived = false;
     listening = true;
     micBtn.classList.add('listening');
     micBtn.textContent = '●';
+
+    recognition.onstart = () => {
+      showToast('Listening…');
+    };
+
     recognition.onresult = (event) => {
+      resultReceived = true;
       let finalText = '', interimText = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      for (let i = 0; i < event.results.length; i++) {
         const t = event.results[i][0].transcript;
         if (event.results[i].isFinal) finalText += t;
         else interimText += t;
       }
-      if (finalText) lastTranscript = finalText;
-      else if (interimText) lastTranscript = interimText;
+      const combined = (finalText || interimText).trim();
+      if (combined) lastTranscript = combined;
     };
+
     recognition.onerror = (event) => {
       const err = event.error;
-      stopListening();
-      if (err === 'not-allowed' || err === 'service-not-allowed') showToast('Microphone permission denied', true);
-      else if (err === 'no-speech') showToast("Didn't catch that — try again", true);
-      else if (err === 'aborted') { /* user stopped, ignore */ }
-      else showToast('Voice error: ' + err, true);
+      const captured = lastTranscript;
+      finishListening();
+      if (err === 'not-allowed' || err === 'service-not-allowed') {
+        showToast('Microphone permission denied', true);
+      } else if (err === 'no-speech') {
+        showToast("Didn't catch that — try again", true);
+      } else if (err === 'aborted') {
+        if (captured) openConfirm(captured);
+      } else {
+        showToast('Voice error: ' + err, true);
+      }
     };
+
     recognition.onend = () => {
-      const wasListening = listening;
-      stopListening();
-      if (wasListening && lastTranscript.trim()) {
-        openConfirm(lastTranscript.trim());
-      } else if (wasListening) {
+      const captured = lastTranscript;
+      const had = resultReceived;
+      finishListening();
+      if (captured) {
+        openConfirm(captured);
+      } else if (had) {
+        showToast('Heard nothing — try again', true);
+      } else {
         showToast("Didn't catch anything — try again", true);
       }
     };
-    try { recognition.start(); }
-    catch (e) { stopListening(); showToast('Could not start mic: ' + e.message, true); }
+
+    try {
+      recognition.start();
+    } catch (e) {
+      finishListening();
+      showToast('Could not start mic: ' + e.message, true);
+      return;
+    }
+
+    listenTimeout = setTimeout(() => {
+      if (listening) forceStop();
+    }, 30000);
   }
-  micBtn.addEventListener('click', () => { if (listening) stopListening(); else startListening(); });
-  function openConfirm(text) { confirmText.value = text; confirmTime.value = nowTimeString(); confirmModal.classList.add('show'); }
+
+  function finishListening() {
+    listening = false;
+    micBtn.classList.remove('listening');
+    micBtn.textContent = '🎤';
+    if (listenTimeout) { clearTimeout(listenTimeout); listenTimeout = null; }
+    recognition = null;
+  }
+
+  function forceStop() {
+    if (recognition) {
+      try { recognition.stop(); } catch (e) {}
+      try { recognition.abort(); } catch (e) {}
+    }
+    setTimeout(() => {
+      if (listening) {
+        const captured = lastTranscript;
+        finishListening();
+        if (captured) openConfirm(captured);
+        else showToast('Stopped — nothing captured', true);
+      }
+    }, 500);
+  }
+
+  micBtn.addEventListener('click', () => {
+    if (listening) {
+      forceStop();
+    } else {
+      startListening();
+    }
+  });
+
+  function openConfirm(text) {
+    confirmText.value = text;
+    confirmTime.value = nowTimeString();
+    confirmModal.classList.add('show');
+  }
   document.getElementById('confirm-cancel').addEventListener('click', () => confirmModal.classList.remove('show'));
   document.getElementById('confirm-redo').addEventListener('click', () => { confirmModal.classList.remove('show'); setTimeout(startListening, 200); });
   document.getElementById('confirm-save').addEventListener('click', () => {
@@ -278,6 +363,8 @@
     addEntry(text, confirmTime.value || nowTimeString());
     confirmModal.classList.remove('show');
   });
+
+  // ============ Export ============
   function csvCell(v) { const s = String(v); if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"'; return s; }
   function buildCSV(date, entries) {
     const sorted = [...entries].sort((a,b) => a.time.localeCompare(b.time));
