@@ -506,13 +506,22 @@
   }
   async function shareCSV(date, entries) {
     const csv = buildCSV(date, entries);
+    // Prepend BOM so Excel correctly detects UTF-8 and doesn't mangle characters
+    const csvWithBom = '\uFEFF' + csv;
     const filename = 'timelog-' + date + '.csv';
-    const file = new File([csv], filename, { type: 'text/csv' });
+    const file = new File([csvWithBom], filename, { type: 'text/csv;charset=utf-8' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ title: 'Time Log ' + date, text: 'Time log for ' + formatDateLong(date), files: [file] }); return true; }
-      catch (e) { if (e.name === 'AbortError') return false; }
+      try {
+        await navigator.share({
+          title: 'Time Log ' + date,
+          files: [file]
+        });
+        return true;
+      } catch (e) {
+        if (e.name === 'AbortError') return false;
+      }
     }
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename;
