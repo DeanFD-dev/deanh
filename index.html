@@ -29,7 +29,9 @@
   .entries { display: flex; flex-direction: column; gap: 8px; }
   .empty { text-align: center; padding: 60px 20px; color: #64748b; font-size: 15px; line-height: 1.5; }
   .entry { background: #1e293b; border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; }
-  .entry-time { font-size: 13px; font-weight: 600; color: #38bdf8; min-width: 64px; padding-top: 1px; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .entry-meta { display: flex; flex-direction: column; gap: 2px; min-width: 72px; }
+  .entry-time { font-size: 13px; font-weight: 600; color: #38bdf8; padding-top: 1px; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .entry-duration { font-size: 12px; color: #94a3b8; cursor: pointer; font-variant-numeric: tabular-nums; }
   .entry-text { flex: 1; font-size: 15px; line-height: 1.4; color: #e2e8f0; word-wrap: break-word; }
   .entry-delete { background: transparent; border: none; color: #64748b; font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
   .entry-delete:active { color: #ef4444; }
@@ -58,6 +60,15 @@
   .modal-time-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
   .modal-time-row label { font-size: 14px; color: #94a3b8; }
   .modal-time-row input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 15px; font-family: inherit; }
+  .duration-row { margin-bottom: 12px; }
+  .duration-row .label { font-size: 14px; color: #94a3b8; margin-bottom: 6px; }
+  .duration-options { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dur-btn { flex: 1; min-width: 60px; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 10px 8px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .dur-btn.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8; }
+  .custom-duration { display: none; margin-top: 8px; align-items: center; gap: 8px; }
+  .custom-duration.show { display: flex; }
+  .custom-duration label { font-size: 14px; color: #94a3b8; }
+  .custom-duration input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 15px; font-family: inherit; width: 90px; }
   .modal-buttons { display: flex; gap: 8px; }
   .modal-btn { flex: 1; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
   .modal-btn.cancel { background: #334155; color: #e2e8f0; }
@@ -88,11 +99,27 @@
     <button class="secondary-btn primary" id="export-btn">Export day</button>
   </div>
 </div>
+
+<!-- Voice confirmation modal -->
 <div class="modal-backdrop" id="confirm-modal">
   <div class="modal">
     <h3>I heard:</h3>
     <textarea class="modal-input" id="confirm-text"></textarea>
     <div class="modal-time-row"><label>Time:</label><input type="time" id="confirm-time"></div>
+    <div class="duration-row">
+      <div class="label">Duration:</div>
+      <div class="duration-options" data-target="confirm">
+        <button class="dur-btn" data-mins="15">15m</button>
+        <button class="dur-btn" data-mins="30">30m</button>
+        <button class="dur-btn" data-mins="60">1h</button>
+        <button class="dur-btn" data-mins="120">2h</button>
+        <button class="dur-btn" data-mins="custom">Custom</button>
+      </div>
+      <div class="custom-duration" id="confirm-custom-row">
+        <label>Minutes:</label>
+        <input type="number" id="confirm-custom-mins" min="1" max="1440" inputmode="numeric">
+      </div>
+    </div>
     <div class="modal-buttons">
       <button class="modal-btn cancel" id="confirm-cancel">Cancel</button>
       <button class="modal-btn redo" id="confirm-redo">🎤 Redo</button>
@@ -100,17 +127,58 @@
     </div>
   </div>
 </div>
+
+<!-- Manual entry modal -->
 <div class="modal-backdrop" id="manual-modal">
   <div class="modal">
     <h3>Add entry</h3>
     <textarea class="modal-input" id="manual-text" placeholder="What are you logging?"></textarea>
     <div class="modal-time-row"><label>Time:</label><input type="time" id="manual-time"></div>
+    <div class="duration-row">
+      <div class="label">Duration:</div>
+      <div class="duration-options" data-target="manual">
+        <button class="dur-btn" data-mins="15">15m</button>
+        <button class="dur-btn" data-mins="30">30m</button>
+        <button class="dur-btn" data-mins="60">1h</button>
+        <button class="dur-btn" data-mins="120">2h</button>
+        <button class="dur-btn" data-mins="custom">Custom</button>
+      </div>
+      <div class="custom-duration" id="manual-custom-row">
+        <label>Minutes:</label>
+        <input type="number" id="manual-custom-mins" min="1" max="1440" inputmode="numeric">
+      </div>
+    </div>
     <div class="modal-buttons">
       <button class="modal-btn cancel" id="manual-cancel">Cancel</button>
       <button class="modal-btn confirm" id="manual-save">Log it</button>
     </div>
   </div>
 </div>
+
+<!-- Edit duration modal -->
+<div class="modal-backdrop" id="edit-dur-modal">
+  <div class="modal">
+    <h3>Edit duration</h3>
+    <div class="duration-row">
+      <div class="duration-options" data-target="editdur">
+        <button class="dur-btn" data-mins="15">15m</button>
+        <button class="dur-btn" data-mins="30">30m</button>
+        <button class="dur-btn" data-mins="60">1h</button>
+        <button class="dur-btn" data-mins="120">2h</button>
+        <button class="dur-btn" data-mins="custom">Custom</button>
+      </div>
+      <div class="custom-duration" id="editdur-custom-row">
+        <label>Minutes:</label>
+        <input type="number" id="editdur-custom-mins" min="0" max="1440" inputmode="numeric">
+      </div>
+    </div>
+    <div class="modal-buttons">
+      <button class="modal-btn cancel" id="editdur-cancel">Cancel</button>
+      <button class="modal-btn confirm" id="editdur-save">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script>
   const memStore = {};
@@ -119,9 +187,15 @@
     set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { memStore[key] = val; } }
   };
   const TODAY_KEY = 'timelog_today', TODAY_DATE_KEY = 'timelog_today_date', ARCHIVE_KEY = 'timelog_archive';
-  let todayEntries = storage.get(TODAY_KEY) || [];
+
+  // Migration: ensure every entry has a durationMins field (default 0 for old entries)
+  function migrateEntries(entries) {
+    return (entries || []).map(e => ({ ...e, durationMins: typeof e.durationMins === 'number' ? e.durationMins : 0 }));
+  }
+  let todayEntries = migrateEntries(storage.get(TODAY_KEY) || []);
   let todayDate = storage.get(TODAY_DATE_KEY) || todayString();
-  let archive = storage.get(ARCHIVE_KEY) || [];
+  let archive = (storage.get(ARCHIVE_KEY) || []).map(d => ({ ...d, entries: migrateEntries(d.entries) }));
+
   if (todayDate !== todayString() && todayEntries.length > 0) {
     archive.unshift({ date: todayDate, entries: todayEntries });
     storage.set(ARCHIVE_KEY, archive);
@@ -130,33 +204,38 @@
   } else if (todayDate !== todayString()) {
     todayDate = todayString(); storage.set(TODAY_DATE_KEY, todayDate);
   }
+
   function todayString() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
   function pad(n) { return String(n).padStart(2, '0'); }
   function nowTimeString() { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
   function formatTime12(t) { const [h,m] = t.split(':').map(Number); const period = h>=12?'PM':'AM'; const h12 = h%12||12; return h12+':'+pad(m)+' '+period; }
   function formatDateLong(dateStr) { const [y,m,d] = dateStr.split('-').map(Number); const dt = new Date(y, m-1, d); return dt.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' }); }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-  function totalDuration(entries) {
-    if (entries.length < 2) return null;
-    const sorted = [...entries].sort((a,b) => a.time.localeCompare(b.time));
-    const [h1,m1] = sorted[0].time.split(':').map(Number);
-    const [h2,m2] = sorted[sorted.length-1].time.split(':').map(Number);
-    const mins = (h2*60+m2) - (h1*60+m1);
-    if (mins <= 0) return null;
+  function formatDuration(mins) {
+    if (!mins || mins <= 0) return '0m';
     const h = Math.floor(mins/60), m = mins%60;
-    return (h>0 ? h+'h ' : '') + m + 'm';
+    if (h && m) return h+'h '+m+'m';
+    if (h) return h+'h';
+    return m+'m';
   }
+  function totalMinutes(entries) {
+    return entries.reduce((sum, e) => sum + (e.durationMins || 0), 0);
+  }
+
   function saveToday() { storage.set(TODAY_KEY, todayEntries); storage.set(TODAY_DATE_KEY, todayDate); }
   function saveArchive() { storage.set(ARCHIVE_KEY, archive); }
+
   const entriesEl = document.getElementById('entries');
   const archiveListEl = document.getElementById('archive-list');
   const dateEl = document.getElementById('date');
   const totalEl = document.getElementById('total');
+
   function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
   function render() {
     dateEl.textContent = formatDateLong(todayDate);
-    const total = totalDuration(todayEntries);
-    totalEl.textContent = total || (todayEntries.length === 0 ? '—' : 'logging');
+    const totalMins = totalMinutes(todayEntries);
+    totalEl.textContent = totalMins > 0 ? formatDuration(totalMins) : (todayEntries.length === 0 ? '—' : '0m');
     if (todayEntries.length === 0) {
       entriesEl.innerHTML = '<div class="empty">No entries yet today.<br>Tap the mic to start logging.</div>';
     } else {
@@ -165,23 +244,89 @@
       sorted.forEach(entry => {
         const el = document.createElement('div');
         el.className = 'entry'; el.dataset.id = entry.id;
-        el.innerHTML = `<div class="entry-time" data-action="edit-time">${formatTime12(entry.time)}</div><div class="entry-text" data-action="edit-text">${escapeHtml(entry.text)}</div><button class="entry-delete" data-action="delete" aria-label="Delete">×</button>`;
+        el.innerHTML = `
+          <div class="entry-meta">
+            <div class="entry-time" data-action="edit-time">${formatTime12(entry.time)}</div>
+            <div class="entry-duration" data-action="edit-duration">${formatDuration(entry.durationMins)}</div>
+          </div>
+          <div class="entry-text" data-action="edit-text">${escapeHtml(entry.text)}</div>
+          <button class="entry-delete" data-action="delete" aria-label="Delete">×</button>
+        `;
         entriesEl.appendChild(el);
       });
     }
     renderArchive();
   }
+
   function renderArchive() {
     if (archive.length === 0) { archiveListEl.innerHTML = '<div class="empty">No archived days yet.<br>Past days will appear here after export.</div>'; return; }
     archiveListEl.innerHTML = '';
     archive.forEach((day, idx) => {
-      const total = totalDuration(day.entries);
+      const mins = totalMinutes(day.entries);
       const el = document.createElement('div');
       el.className = 'archive-day';
-      el.innerHTML = `<div class="archive-day-header"><div class="archive-date">${formatDateLong(day.date)}</div><div class="archive-meta">${day.entries.length} entries${total ? ' · ' + total : ''}</div></div><div class="archive-actions"><button class="archive-btn" data-archive-action="export" data-idx="${idx}">Re-export</button><button class="archive-btn danger" data-archive-action="delete" data-idx="${idx}">Delete</button></div>`;
+      el.innerHTML = `<div class="archive-day-header"><div class="archive-date">${formatDateLong(day.date)}</div><div class="archive-meta">${day.entries.length} entries${mins ? ' · ' + formatDuration(mins) : ''}</div></div><div class="archive-actions"><button class="archive-btn" data-archive-action="export" data-idx="${idx}">Re-export</button><button class="archive-btn danger" data-archive-action="delete" data-idx="${idx}">Delete</button></div>`;
       archiveListEl.appendChild(el);
     });
   }
+
+  // ============ Duration picker logic (shared across modals) ============
+  const PRESET_MINS = [15, 30, 60, 120];
+  // selected duration state per modal
+  const durState = { confirm: 15, manual: 15, editdur: 15 };
+
+  function setDuration(target, mins, opts) {
+    opts = opts || {};
+    durState[target] = mins;
+    const group = document.querySelector(`.duration-options[data-target="${target}"]`);
+    if (!group) return;
+    const customRow = document.getElementById(target + '-custom-row');
+    const customInput = document.getElementById(target + '-custom-mins');
+    const isPreset = PRESET_MINS.includes(mins);
+    group.querySelectorAll('.dur-btn').forEach(b => {
+      const v = b.dataset.mins;
+      if (v === 'custom') b.classList.toggle('active', !isPreset);
+      else b.classList.toggle('active', isPreset && parseInt(v,10) === mins);
+    });
+    if (isPreset) {
+      customRow.classList.remove('show');
+    } else {
+      customRow.classList.add('show');
+      if (!opts.skipInputUpdate) customInput.value = mins;
+    }
+  }
+
+  // Wire up all duration option groups
+  document.querySelectorAll('.duration-options').forEach(group => {
+    const target = group.dataset.target;
+    group.addEventListener('click', (e) => {
+      const btn = e.target.closest('.dur-btn');
+      if (!btn) return;
+      const val = btn.dataset.mins;
+      if (val === 'custom') {
+        const current = durState[target];
+        const startVal = PRESET_MINS.includes(current) ? '' : String(current || '');
+        const input = document.getElementById(target + '-custom-mins');
+        document.getElementById(target + '-custom-row').classList.add('show');
+        group.querySelectorAll('.dur-btn').forEach(b => b.classList.toggle('active', b.dataset.mins === 'custom'));
+        input.value = startVal;
+        setTimeout(() => input.focus(), 50);
+      } else {
+        setDuration(target, parseInt(val, 10));
+      }
+    });
+  });
+
+  // Custom input handlers
+  ['confirm', 'manual', 'editdur'].forEach(target => {
+    const input = document.getElementById(target + '-custom-mins');
+    input.addEventListener('input', () => {
+      const v = parseInt(input.value, 10);
+      if (!isNaN(v) && v >= 0) durState[target] = v;
+    });
+  });
+
+  // ============ Entry list interactions ============
   entriesEl.addEventListener('click', (e) => {
     const entryEl = e.target.closest('.entry'); if (!entryEl) return;
     const id = entryEl.dataset.id; const action = e.target.dataset.action;
@@ -201,24 +346,48 @@
       const commit = () => { const v = input.value.trim(); if (v) { entry.text = v; saveToday(); } render(); };
       input.addEventListener('blur', commit);
       input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); } if (ev.key === 'Escape') render(); });
+    } else if (action === 'edit-duration') {
+      openEditDuration(entry);
     }
   });
-  function addEntry(text, time) {
-    todayEntries.push({ id: uid(), text: text.trim(), time: time || nowTimeString() });
+
+  function addEntry(text, time, durationMins) {
+    todayEntries.push({ id: uid(), text: text.trim(), time: time || nowTimeString(), durationMins: durationMins || 0 });
     saveToday(); render(); showToast('Logged');
   }
+
+  // ============ Manual entry modal ============
   const manualModal = document.getElementById('manual-modal');
   const manualText = document.getElementById('manual-text');
   const manualTime = document.getElementById('manual-time');
   document.getElementById('manual-btn').addEventListener('click', () => {
     manualText.value = ''; manualTime.value = nowTimeString();
+    setDuration('manual', 15);
     manualModal.classList.add('show'); setTimeout(() => manualText.focus(), 100);
   });
   document.getElementById('manual-cancel').addEventListener('click', () => manualModal.classList.remove('show'));
   document.getElementById('manual-save').addEventListener('click', () => {
     const text = manualText.value.trim(); if (!text) return;
-    addEntry(text, manualTime.value || nowTimeString());
+    addEntry(text, manualTime.value || nowTimeString(), durState.manual);
     manualModal.classList.remove('show');
+  });
+
+  // ============ Edit duration modal ============
+  const editDurModal = document.getElementById('edit-dur-modal');
+  let editingEntry = null;
+  function openEditDuration(entry) {
+    editingEntry = entry;
+    setDuration('editdur', entry.durationMins || 0);
+    editDurModal.classList.add('show');
+  }
+  document.getElementById('editdur-cancel').addEventListener('click', () => { editDurModal.classList.remove('show'); editingEntry = null; });
+  document.getElementById('editdur-save').addEventListener('click', () => {
+    if (editingEntry) {
+      editingEntry.durationMins = Math.max(0, durState.editdur || 0);
+      saveToday(); render();
+    }
+    editDurModal.classList.remove('show');
+    editingEntry = null;
   });
 
   // ============ Voice recognition (iOS-hardened) ============
@@ -239,34 +408,20 @@
   }
 
   function startListening() {
-    if (!SpeechRecognition) {
-      showToast('Voice not supported on this device', true);
-      return;
-    }
+    if (!SpeechRecognition) { showToast('Voice not supported on this device', true); return; }
     if (listening) return;
-
-    try {
-      recognition = new SpeechRecognition();
-    } catch (e) {
-      showToast('Could not create recognizer', true);
-      return;
-    }
-
+    try { recognition = new SpeechRecognition(); }
+    catch (e) { showToast('Could not create recognizer', true); return; }
     recognition.lang = navigator.language || 'en-US';
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
     recognition.continuous = false;
-
     lastTranscript = '';
     resultReceived = false;
     listening = true;
     micBtn.classList.add('listening');
     micBtn.textContent = '●';
-
-    recognition.onstart = () => {
-      showToast('Listening…');
-    };
-
+    recognition.onstart = () => { showToast('Listening…'); };
     recognition.onresult = (event) => {
       resultReceived = true;
       let finalText = '', interimText = '';
@@ -278,46 +433,26 @@
       const combined = (finalText || interimText).trim();
       if (combined) lastTranscript = combined;
     };
-
     recognition.onerror = (event) => {
       const err = event.error;
       const captured = lastTranscript;
       finishListening();
-      if (err === 'not-allowed' || err === 'service-not-allowed') {
-        showToast('Microphone permission denied', true);
-      } else if (err === 'no-speech') {
-        showToast("Didn't catch that — try again", true);
-      } else if (err === 'aborted') {
-        if (captured) openConfirm(captured);
-      } else {
-        showToast('Voice error: ' + err, true);
-      }
+      if (err === 'not-allowed' || err === 'service-not-allowed') showToast('Microphone permission denied', true);
+      else if (err === 'no-speech') showToast("Didn't catch that — try again", true);
+      else if (err === 'aborted') { if (captured) openConfirm(captured); }
+      else showToast('Voice error: ' + err, true);
     };
-
     recognition.onend = () => {
       const captured = lastTranscript;
       const had = resultReceived;
       finishListening();
-      if (captured) {
-        openConfirm(captured);
-      } else if (had) {
-        showToast('Heard nothing — try again', true);
-      } else {
-        showToast("Didn't catch anything — try again", true);
-      }
+      if (captured) openConfirm(captured);
+      else if (had) showToast('Heard nothing — try again', true);
+      else showToast("Didn't catch anything — try again", true);
     };
-
-    try {
-      recognition.start();
-    } catch (e) {
-      finishListening();
-      showToast('Could not start mic: ' + e.message, true);
-      return;
-    }
-
-    listenTimeout = setTimeout(() => {
-      if (listening) forceStop();
-    }, 30000);
+    try { recognition.start(); }
+    catch (e) { finishListening(); showToast('Could not start mic: ' + e.message, true); return; }
+    listenTimeout = setTimeout(() => { if (listening) forceStop(); }, 30000);
   }
 
   function finishListening() {
@@ -343,24 +478,19 @@
     }, 500);
   }
 
-  micBtn.addEventListener('click', () => {
-    if (listening) {
-      forceStop();
-    } else {
-      startListening();
-    }
-  });
+  micBtn.addEventListener('click', () => { if (listening) forceStop(); else startListening(); });
 
   function openConfirm(text) {
     confirmText.value = text;
     confirmTime.value = nowTimeString();
+    setDuration('confirm', 15);
     confirmModal.classList.add('show');
   }
   document.getElementById('confirm-cancel').addEventListener('click', () => confirmModal.classList.remove('show'));
   document.getElementById('confirm-redo').addEventListener('click', () => { confirmModal.classList.remove('show'); setTimeout(startListening, 200); });
   document.getElementById('confirm-save').addEventListener('click', () => {
     const text = confirmText.value.trim(); if (!text) return;
-    addEntry(text, confirmTime.value || nowTimeString());
+    addEntry(text, confirmTime.value || nowTimeString(), durState.confirm);
     confirmModal.classList.remove('show');
   });
 
@@ -368,8 +498,10 @@
   function csvCell(v) { const s = String(v); if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"'; return s; }
   function buildCSV(date, entries) {
     const sorted = [...entries].sort((a,b) => a.time.localeCompare(b.time));
-    const rows = [['Date', 'Time', 'Entry']];
-    sorted.forEach(e => rows.push([date, formatTime12(e.time), e.text]));
+    const rows = [['Date', 'Time', 'Duration (min)', 'Entry']];
+    sorted.forEach(e => rows.push([date, formatTime12(e.time), e.durationMins || 0, e.text]));
+    const total = totalMinutes(sorted);
+    rows.push(['', '', total, 'TOTAL']);
     return rows.map(r => r.map(csvCell).join(',')).join('\r\n');
   }
   async function shareCSV(date, entries) {
