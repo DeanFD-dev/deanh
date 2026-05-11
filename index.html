@@ -36,11 +36,23 @@
   .entry-delete { background: transparent; border: none; color: #64748b; font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
   .entry-delete:active { color: #ef4444; }
   .entry input.edit-input { flex: 1; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px; padding: 6px 8px; font-size: 15px; font-family: inherit; }
-  .archive-day { background: #1e293b; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
-  .archive-day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .archive-day { background: #1e293b; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+  .archive-day-header { display: flex; justify-content: space-between; align-items: center; padding: 14px; cursor: pointer; user-select: none; }
+  .archive-day-header:active { background: #243044; }
+  .archive-day-left { display: flex; align-items: center; gap: 10px; }
+  .archive-chevron { color: #64748b; font-size: 12px; transition: transform 0.2s ease; display: inline-block; }
+  .archive-day.expanded .archive-chevron { transform: rotate(90deg); }
   .archive-date { font-size: 15px; font-weight: 600; color: #f1f5f9; }
   .archive-meta { font-size: 13px; color: #94a3b8; }
-  .archive-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .archive-body { display: none; padding: 0 14px 14px; border-top: 1px solid #334155; }
+  .archive-day.expanded .archive-body { display: block; }
+  .archive-entries { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; margin-bottom: 12px; }
+  .archive-entry { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; background: #0f172a; border-radius: 8px; }
+  .archive-entry-meta { display: flex; flex-direction: column; gap: 1px; min-width: 70px; }
+  .archive-entry-time { font-size: 12px; font-weight: 600; color: #38bdf8; font-variant-numeric: tabular-nums; }
+  .archive-entry-duration { font-size: 11px; color: #94a3b8; font-variant-numeric: tabular-nums; }
+  .archive-entry-text { flex: 1; font-size: 14px; line-height: 1.35; color: #e2e8f0; word-wrap: break-word; }
+  .archive-actions { display: flex; gap: 8px; }
   .archive-btn { flex: 1; background: #334155; border: none; color: #e2e8f0; padding: 8px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
   .archive-btn.danger { background: #450a0a; color: #fca5a5; }
   .action-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(to top, #0f172a 70%, rgba(15,23,42,0)); display: flex; flex-direction: column; gap: 10px; align-items: center; }
@@ -100,7 +112,6 @@
   </div>
 </div>
 
-<!-- Voice confirmation modal -->
 <div class="modal-backdrop" id="confirm-modal">
   <div class="modal">
     <h3>I heard:</h3>
@@ -128,7 +139,6 @@
   </div>
 </div>
 
-<!-- Manual entry modal -->
 <div class="modal-backdrop" id="manual-modal">
   <div class="modal">
     <h3>Add entry</h3>
@@ -155,7 +165,6 @@
   </div>
 </div>
 
-<!-- Edit duration modal -->
 <div class="modal-backdrop" id="edit-dur-modal">
   <div class="modal">
     <h3>Edit duration</h3>
@@ -188,13 +197,14 @@
   };
   const TODAY_KEY = 'timelog_today', TODAY_DATE_KEY = 'timelog_today_date', ARCHIVE_KEY = 'timelog_archive';
 
-  // Migration: ensure every entry has a durationMins field (default 0 for old entries)
   function migrateEntries(entries) {
     return (entries || []).map(e => ({ ...e, durationMins: typeof e.durationMins === 'number' ? e.durationMins : 0 }));
   }
   let todayEntries = migrateEntries(storage.get(TODAY_KEY) || []);
   let todayDate = storage.get(TODAY_DATE_KEY) || todayString();
   let archive = (storage.get(ARCHIVE_KEY) || []).map(d => ({ ...d, entries: migrateEntries(d.entries) }));
+  // Track which archive days are expanded (by date key)
+  const expandedDays = new Set();
 
   if (todayDate !== todayString() && todayEntries.length > 0) {
     archive.unshift({ date: todayDate, entries: todayEntries });
@@ -263,16 +273,45 @@
     archiveListEl.innerHTML = '';
     archive.forEach((day, idx) => {
       const mins = totalMinutes(day.entries);
+      const isExpanded = expandedDays.has(day.date);
       const el = document.createElement('div');
-      el.className = 'archive-day';
-      el.innerHTML = `<div class="archive-day-header"><div class="archive-date">${formatDateLong(day.date)}</div><div class="archive-meta">${day.entries.length} entries${mins ? ' · ' + formatDuration(mins) : ''}</div></div><div class="archive-actions"><button class="archive-btn" data-archive-action="export" data-idx="${idx}">Re-export</button><button class="archive-btn danger" data-archive-action="delete" data-idx="${idx}">Delete</button></div>`;
+      el.className = 'archive-day' + (isExpanded ? ' expanded' : '');
+      el.dataset.date = day.date;
+
+      const sortedEntries = [...day.entries].sort((a,b) => a.time.localeCompare(b.time));
+      const entriesHtml = sortedEntries.length === 0
+        ? '<div class="empty" style="padding: 20px 0;">No entries</div>'
+        : sortedEntries.map(e => `
+            <div class="archive-entry">
+              <div class="archive-entry-meta">
+                <div class="archive-entry-time">${formatTime12(e.time)}</div>
+                <div class="archive-entry-duration">${formatDuration(e.durationMins)}</div>
+              </div>
+              <div class="archive-entry-text">${escapeHtml(e.text)}</div>
+            </div>
+          `).join('');
+
+      el.innerHTML = `
+        <div class="archive-day-header" data-toggle="${day.date}">
+          <div class="archive-day-left">
+            <span class="archive-chevron">▶</span>
+            <div class="archive-date">${formatDateLong(day.date)}</div>
+          </div>
+          <div class="archive-meta">${day.entries.length} entries${mins ? ' · ' + formatDuration(mins) : ''}</div>
+        </div>
+        <div class="archive-body">
+          <div class="archive-entries">${entriesHtml}</div>
+          <div class="archive-actions">
+            <button class="archive-btn" data-archive-action="export" data-idx="${idx}">Re-export</button>
+            <button class="archive-btn danger" data-archive-action="delete" data-idx="${idx}">Delete</button>
+          </div>
+        </div>
+      `;
       archiveListEl.appendChild(el);
     });
   }
 
-  // ============ Duration picker logic (shared across modals) ============
   const PRESET_MINS = [15, 30, 60, 120];
-  // selected duration state per modal
   const durState = { confirm: 15, manual: 15, editdur: 15 };
 
   function setDuration(target, mins, opts) {
@@ -296,7 +335,6 @@
     }
   }
 
-  // Wire up all duration option groups
   document.querySelectorAll('.duration-options').forEach(group => {
     const target = group.dataset.target;
     group.addEventListener('click', (e) => {
@@ -317,7 +355,6 @@
     });
   });
 
-  // Custom input handlers
   ['confirm', 'manual', 'editdur'].forEach(target => {
     const input = document.getElementById(target + '-custom-mins');
     input.addEventListener('input', () => {
@@ -326,7 +363,6 @@
     });
   });
 
-  // ============ Entry list interactions ============
   entriesEl.addEventListener('click', (e) => {
     const entryEl = e.target.closest('.entry'); if (!entryEl) return;
     const id = entryEl.dataset.id; const action = e.target.dataset.action;
@@ -356,7 +392,6 @@
     saveToday(); render(); showToast('Logged');
   }
 
-  // ============ Manual entry modal ============
   const manualModal = document.getElementById('manual-modal');
   const manualText = document.getElementById('manual-text');
   const manualTime = document.getElementById('manual-time');
@@ -372,7 +407,6 @@
     manualModal.classList.remove('show');
   });
 
-  // ============ Edit duration modal ============
   const editDurModal = document.getElementById('edit-dur-modal');
   let editingEntry = null;
   function openEditDuration(entry) {
@@ -390,7 +424,6 @@
     editingEntry = null;
   });
 
-  // ============ Voice recognition (iOS-hardened) ============
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const micBtn = document.getElementById('mic');
   const confirmModal = document.getElementById('confirm-modal');
@@ -494,7 +527,6 @@
     confirmModal.classList.remove('show');
   });
 
-  // ============ Export ============
   function csvCell(v) { const s = String(v); if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"'; return s; }
   function buildCSV(date, entries) {
     const sorted = [...entries].sort((a,b) => a.time.localeCompare(b.time));
@@ -506,16 +538,12 @@
   }
   async function shareCSV(date, entries) {
     const csv = buildCSV(date, entries);
-    // Prepend BOM so Excel correctly detects UTF-8 and doesn't mangle characters
     const csvWithBom = '\uFEFF' + csv;
     const filename = 'timelog-' + date + '.csv';
     const file = new File([csvWithBom], filename, { type: 'text/csv;charset=utf-8' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({
-          title: 'Time Log ' + date,
-          files: [file]
-        });
+        await navigator.share({ title: 'Time Log ' + date, files: [file] });
         return true;
       } catch (e) {
         if (e.name === 'AbortError') return false;
@@ -540,17 +568,35 @@
       showToast('Exported & archived');
     }
   });
+
+  // Archive interactions: expand/collapse header, plus action buttons
   archiveListEl.addEventListener('click', async (e) => {
-    const action = e.target.dataset.archiveAction; if (!action) return;
-    const idx = parseInt(e.target.dataset.idx, 10);
-    const day = archive[idx]; if (!day) return;
-    if (action === 'export') await shareCSV(day.date, day.entries);
-    else if (action === 'delete') {
-      if (confirm('Delete archived log for ' + formatDateLong(day.date) + '?')) {
-        archive.splice(idx, 1); saveArchive(); renderArchive();
+    // Action buttons first (so they don't also toggle the header)
+    const actionBtn = e.target.closest('[data-archive-action]');
+    if (actionBtn) {
+      e.stopPropagation();
+      const action = actionBtn.dataset.archiveAction;
+      const idx = parseInt(actionBtn.dataset.idx, 10);
+      const day = archive[idx]; if (!day) return;
+      if (action === 'export') await shareCSV(day.date, day.entries);
+      else if (action === 'delete') {
+        if (confirm('Delete archived log for ' + formatDateLong(day.date) + '?')) {
+          expandedDays.delete(day.date);
+          archive.splice(idx, 1); saveArchive(); renderArchive();
+        }
       }
+      return;
+    }
+    // Otherwise: toggle expand/collapse
+    const header = e.target.closest('.archive-day-header');
+    if (header) {
+      const date = header.dataset.toggle;
+      if (expandedDays.has(date)) expandedDays.delete(date);
+      else expandedDays.add(date);
+      renderArchive();
     }
   });
+
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
