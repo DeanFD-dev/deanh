@@ -198,7 +198,7 @@
   </div>
   <div class="secondary-actions">
     <button class="secondary-btn" id="manual-btn">Type entry</button>
-    <button class="secondary-btn primary" id="export-btn">Export day</button>
+    <button class="secondary-btn primary" id="submit-btn">Submit day</button>
   </div>
 </div>
 
@@ -293,12 +293,27 @@
     ];
   }
 
+  // ============ Merge helper: merge entries into existing day record by date ============
+  function mergeIntoArchive(date, newEntries) {
+    if (!newEntries || newEntries.length === 0) return;
+    const existing = archive.find(d => d.date === date);
+    if (existing) {
+      // Merge, dedupe by id
+      const existingIds = new Set(existing.entries.map(e => e.id));
+      newEntries.forEach(e => { if (!existingIds.has(e.id)) existing.entries.push(e); });
+    } else {
+      archive.unshift({ date, entries: [...newEntries] });
+    }
+    // Sort archive by date desc so newest first
+    archive.sort((a, b) => b.date.localeCompare(a.date));
+    saveArchive();
+  }
+
   function checkDateRollover() {
     const now = todayString();
     if (todayDate !== now) {
       if (todayEntries.length > 0) {
-        archive.unshift({ date: todayDate, entries: todayEntries });
-        storage.set(ARCHIVE_KEY, archive);
+        mergeIntoArchive(todayDate, todayEntries);
       }
       todayEntries = []; todayDate = now;
       storage.set(TODAY_KEY, todayEntries); storage.set(TODAY_DATE_KEY, todayDate);
@@ -396,7 +411,7 @@
 
   function renderArchive() {
     const q = searchQuery.trim().toLowerCase();
-    if (archive.length === 0) { archiveListEl.innerHTML = '<div class="empty">No archived days yet.<br>Past days will appear here after export.</div>'; return; }
+    if (archive.length === 0) { archiveListEl.innerHTML = '<div class="empty">No archived days yet.<br>Submit a day to see it here.</div>'; return; }
     archiveListEl.innerHTML = '';
     let anyShown = false;
     archive.forEach((day, idx) => {
@@ -437,7 +452,7 @@
         <div class="archive-body">
           <div class="archive-entries">${entriesHtml}</div>
           <div class="archive-actions">
-            <button class="archive-btn" data-archive-action="export" data-idx="${idx}">Re-export</button>
+            <button class="archive-btn" data-archive-action="export" data-idx="${idx}">Export CSV</button>
             <button class="archive-btn danger" data-archive-action="delete-day" data-idx="${idx}">Delete day</button>
           </div>
         </div>
@@ -492,6 +507,7 @@
   });
 
   let lastDeleted = null;
+  let lastSubmitted = null; // for submit undo: { date, entryIds }
   entriesEl.addEventListener('click', (e) => {
     const entryEl = e.target.closest('.entry'); if (!entryEl) return;
     const id = entryEl.dataset.id; const action = e.target.dataset.action;
@@ -500,7 +516,7 @@
       lastDeleted = { kind: 'today', entry: { ...entry } };
       todayEntries = todayEntries.filter(x => x.id !== id);
       saveToday(); render();
-      showUndoToast('Entry deleted');
+      showUndoToast('Entry deleted', undoDelete);
     } else if (action === 'edit-time') inlineEditTime(e.target, entry, () => { saveToday(); render(); });
     else if (action === 'edit-text') inlineEditText(e.target, entry, () => { saveToday(); render(); });
     else if (action === 'edit-duration') openEditDuration(entry, () => { saveToday(); render(); });
@@ -535,7 +551,7 @@
         lastDeleted = { kind: 'archive', dayIdx, entry: { ...entry } };
         day.entries = day.entries.filter(x => x.id !== eid);
         saveArchive(); renderArchive();
-        showUndoToast('Entry deleted');
+        showUndoToast('Entry deleted', undoDelete);
       } else if (aaction === 'edit-time') inlineEditTime(e.target, entry, () => { saveArchive(); renderArchive(); });
       else if (aaction === 'edit-text') inlineEditText(e.target, entry, () => { saveArchive(); renderArchive(); });
       else if (aaction === 'edit-duration') openEditDuration(entry, () => { saveArchive(); renderArchive(); });
@@ -841,17 +857,62 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     return true;
   }
-  document.getElementById('export-btn').addEventListener('click', async () => {
-    if (todayEntries.length === 0) { showToast('Nothing to export yet', true); return; }
-    const ok = await shareCSV(todayDate, todayEntries);
-    if (ok) {
-      archive.unshift({ date: todayDate, entries: todayEntries });
-      saveArchive();
-      todayEntries = []; todayDate = todayString();
-      saveToday(); render();
-      showToast('Exported & archived');
-    }
+
+  // ============ Submit day (merge into archive) ============
+  document.getElementById('submit-btn').addEventListener('click', () => {
+    if (todayEntries.length === 0) { showToast('Nothing to submit yet', true); return; }
+    const count = todayEntries.length;
+    const submittedCopy = todayEntries.map(e => ({ ...e }));
+    const submittedIds = submittedCopy.map(e => e.id);
+    const dateOfSubmission = todayDate;
+
+    mergeIntoArchive(dateOfSubmission, submittedCopy);
+
+    // Clear today
+    todayEntries = [];
+    todayDate = todayString();
+    saveToday();
+    render();
+
+    lastSubmitted = { date: dateOfSubmission, entryIds: submittedIds, entries: submittedCopy };
+    const existingDay = archive.find(d => d.date === dateOfSubmission);
+    const totalInDay = existingDay ? existingDay.entries.length : count;
+    const verb = (totalInDay > count) ? 'Added' : 'Submitted';
+    showUndoToast(verb + ' ' + count + ' entr' + (count === 1 ? 'y' : 'ies'), undoSubmit);
   });
+
+  function undoSubmit() {
+    if (!lastSubmitted) return;
+    const { date, entryIds, entries } = lastSubmitted;
+    // Remove the submitted entries from the archive day record
+    const dayIdx = archive.findIndex(d => d.date === date);
+    if (dayIdx >= 0) {
+      const day = archive[dayIdx];
+      const idSet = new Set(entryIds);
+      day.entries = day.entries.filter(e => !idSet.has(e.id));
+      // If the day is now empty AND it's not for today's date, remove it
+      if (day.entries.length === 0) archive.splice(dayIdx, 1);
+      saveArchive();
+    }
+    // Restore entries back to today (only if it's still the same date)
+    if (date === todayString()) {
+      todayEntries = entries.concat(todayEntries);
+      saveToday();
+    }
+    lastSubmitted = null;
+    render();
+  }
+
+  function undoDelete() {
+    if (!lastDeleted) return;
+    if (lastDeleted.kind === 'today') {
+      todayEntries.push(lastDeleted.entry); saveToday(); render();
+    } else if (lastDeleted.kind === 'archive') {
+      const day = archive[lastDeleted.dayIdx];
+      if (day) { day.entries.push(lastDeleted.entry); saveArchive(); renderArchive(); }
+    }
+    lastDeleted = null;
+  }
 
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => {
@@ -873,27 +934,20 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
   }
-  function showUndoToast(msg) {
+  function showUndoToast(msg, undoFn) {
     const t = document.getElementById('toast');
     t.innerHTML = '';
     t.classList.remove('error');
     const span = document.createElement('span'); span.textContent = msg;
     const btn = document.createElement('button'); btn.textContent = 'Undo';
     btn.addEventListener('click', () => {
-      if (!lastDeleted) return;
-      if (lastDeleted.kind === 'today') {
-        todayEntries.push(lastDeleted.entry); saveToday(); render();
-      } else if (lastDeleted.kind === 'archive') {
-        const day = archive[lastDeleted.dayIdx];
-        if (day) { day.entries.push(lastDeleted.entry); saveArchive(); renderArchive(); }
-      }
-      lastDeleted = null;
+      if (undoFn) undoFn();
       t.classList.remove('show');
     });
     t.appendChild(span); t.appendChild(btn);
     t.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { t.classList.remove('show'); lastDeleted = null; }, 5000);
+    toastTimer = setTimeout(() => { t.classList.remove('show'); lastDeleted = null; lastSubmitted = null; }, 5000);
   }
 
   document.addEventListener('keydown', (e) => {
@@ -906,7 +960,7 @@
     if (inField) return;
     if (e.code === 'Space') { e.preventDefault(); if (listening) forceStop(); else startListening(); return; }
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); document.getElementById('manual-btn').click(); return; }
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') { e.preventDefault(); document.getElementById('export-btn').click(); return; }
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); document.getElementById('submit-btn').click(); return; }
   });
 
   render();
