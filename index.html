@@ -9,222 +9,90 @@
 <meta name="theme-color" content="#0f172a">
 <title>Time Log</title>
 <style>
-  :root {
-    --bg: #0f172a;
-    --surface: #1e293b;
-    --surface-2: #243044;
-    --surface-3: #0f172a;
-    --border: #334155;
-    --border-2: #475569;
-    --text: #e2e8f0;
-    --text-dim: #94a3b8;
-    --text-dimmer: #64748b;
-    --text-bright: #f1f5f9;
-    --accent: #38bdf8;
-    --accent-text: #0f172a;
-    --danger: #ef4444;
-    --danger-bg: #450a0a;
-    --danger-text: #fca5a5;
-    --highlight: rgba(250, 204, 21, 0.25);
-    --shadow: rgba(0, 0, 0, 0.3);
-  }
-  [data-theme="light"] {
-    --bg: #f8fafc;
-    --surface: #ffffff;
-    --surface-2: #f1f5f9;
-    --surface-3: #f8fafc;
-    --border: #e2e8f0;
-    --border-2: #cbd5e1;
-    --text: #1e293b;
-    --text-dim: #64748b;
-    --text-dimmer: #94a3b8;
-    --text-bright: #0f172a;
-    --accent: #0284c7;
-    --accent-text: #ffffff;
-    --danger: #dc2626;
-    --danger-bg: #fee2e2;
-    --danger-text: #991b1b;
-    --highlight: rgba(250, 204, 21, 0.4);
-    --shadow: rgba(0, 0, 0, 0.08);
-  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
     margin: 0; padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
-    background: var(--bg); color: var(--text);
+    background: #0f172a; color: #e2e8f0;
     min-height: 100vh; min-height: 100dvh;
     overscroll-behavior-y: contain;
-    transition: background 0.2s ease, color 0.2s ease;
   }
   body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
-  .app { max-width: 600px; margin: 0 auto; padding: 16px 16px 200px; }
-  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-top: 8px; gap: 12px; }
-  .header-left { display: flex; flex-direction: column; gap: 2px; }
-  .date { font-size: 14px; color: var(--text-dim); font-weight: 500; }
-  .total { font-size: 14px; color: var(--text-dim); }
-  .total strong { color: var(--text-bright); font-weight: 600; }
-  .theme-toggle { background: var(--surface); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; padding: 0; }
-  .tabs { display: flex; gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; margin-bottom: 16px; }
-  .tab { flex: 1; background: transparent; border: none; color: var(--text-dim); padding: 8px 12px; border-radius: 7px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
-  .tab.active { background: var(--surface-2); color: var(--text-bright); }
+  .app { max-width: 600px; margin: 0 auto; padding: 16px 16px 140px; }
+  .header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; padding-top: 8px; }
+  .date { font-size: 14px; color: #94a3b8; font-weight: 500; }
+  .total { font-size: 14px; color: #94a3b8; }
+  .total strong { color: #f1f5f9; font-weight: 600; }
+  .tabs { display: flex; gap: 4px; background: #1e293b; border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+  .tab { flex: 1; background: transparent; border: none; color: #94a3b8; padding: 8px 12px; border-radius: 7px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .tab.active { background: #334155; color: #f1f5f9; }
   .entries { display: flex; flex-direction: column; gap: 8px; }
-  .empty { text-align: center; padding: 60px 20px; color: var(--text-dimmer); font-size: 15px; line-height: 1.5; }
-  .entry { background: var(--surface); border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; }
-  .entry-meta { display: flex; flex-direction: column; gap: 2px; min-width: 72px; }
-  .entry-time { font-size: 13px; font-weight: 600; color: var(--accent); padding-top: 1px; cursor: pointer; font-variant-numeric: tabular-nums; }
-  .entry-duration { font-size: 12px; color: var(--text-dim); cursor: pointer; font-variant-numeric: tabular-nums; }
-  .entry-text { flex: 1; font-size: 15px; line-height: 1.4; color: var(--text); word-wrap: break-word; cursor: pointer; }
-  .entry-text.highlight { background: var(--highlight); border-radius: 4px; padding: 1px 4px; margin: -1px -4px; }
-  .entry-delete { background: transparent; border: none; color: var(--text-dimmer); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
-  .entry-delete:active { color: var(--danger); }
-  .entry input.edit-input { flex: 1; background: var(--surface-3); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 15px; font-family: inherit; }
-
-  /* History */
-  .search-row { margin-bottom: 12px; }
-  .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 14px; font-size: 15px; font-family: inherit; }
-  .search-input::placeholder { color: var(--text-dimmer); }
-  .archive-day { background: var(--surface); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
-  .archive-day-header { display: flex; justify-content: space-between; align-items: center; padding: 14px; cursor: pointer; user-select: none; }
-  .archive-day-header:active { background: var(--surface-2); }
-  .archive-day-left { display: flex; align-items: center; gap: 10px; }
-  .archive-chevron { color: var(--text-dimmer); font-size: 12px; transition: transform 0.2s ease; display: inline-block; }
-  .archive-day.expanded .archive-chevron { transform: rotate(90deg); }
-  .archive-date { font-size: 15px; font-weight: 600; color: var(--text-bright); }
-  .archive-meta { font-size: 13px; color: var(--text-dim); }
-  .archive-body { display: none; padding: 0 14px 14px; border-top: 1px solid var(--border); }
-  .archive-day.expanded .archive-body { display: block; }
-  .archive-entries { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; margin-bottom: 12px; }
-  .archive-entry { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; background: var(--surface-3); border-radius: 8px; }
-  .archive-entry-meta { display: flex; flex-direction: column; gap: 1px; min-width: 70px; }
-  .archive-entry-time { font-size: 12px; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; cursor: pointer; }
-  .archive-entry-duration { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; cursor: pointer; }
-  .archive-entry-text { flex: 1; font-size: 14px; line-height: 1.35; color: var(--text); word-wrap: break-word; cursor: pointer; }
-  .archive-entry-text.highlight { background: var(--highlight); border-radius: 4px; padding: 1px 4px; margin: -1px -4px; }
-  .archive-entry-delete { background: transparent; border: none; color: var(--text-dimmer); font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1; }
-  .archive-entry input.edit-input { flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 4px 6px; font-size: 14px; font-family: inherit; }
-  .archive-actions { display: flex; gap: 8px; }
-  .archive-btn { flex: 1; background: var(--surface-2); border: none; color: var(--text); padding: 8px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
-  .archive-btn.danger { background: var(--danger-bg); color: var(--danger-text); }
-
-  /* Bottom action area */
-  .action-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 70%, transparent); display: flex; flex-direction: column; gap: 10px; align-items: center; }
-  .quick-row { display: flex; gap: 6px; overflow-x: auto; width: 100%; max-width: 500px; padding-bottom: 4px; scrollbar-width: none; }
-  .quick-row::-webkit-scrollbar { display: none; }
-  .quick-btn { flex: 0 0 auto; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; white-space: nowrap; }
-  .quick-btn:active { background: var(--surface-2); }
-  .quick-btn.edit { color: var(--text-dim); border-style: dashed; }
-  .mic-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .mic-meter { display: flex; gap: 3px; height: 16px; align-items: center; opacity: 0; transition: opacity 0.2s; }
-  .mic-meter.active { opacity: 1; }
-  .mic-bar { width: 4px; background: var(--danger); border-radius: 2px; height: 4px; transition: height 0.08s ease-out; }
-  .mic-button { width: 72px; height: 72px; border-radius: 50%; border: none; background: var(--accent); color: var(--accent-text); font-size: 32px; cursor: pointer; box-shadow: 0 8px 24px rgba(56,189,248,0.35); transition: transform 0.1s ease, background 0.15s ease; display: flex; align-items: center; justify-content: center; }
+  .empty { text-align: center; padding: 60px 20px; color: #64748b; font-size: 15px; line-height: 1.5; }
+  .entry { background: #1e293b; border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .entry-time { font-size: 13px; font-weight: 600; color: #38bdf8; min-width: 64px; padding-top: 1px; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .entry-text { flex: 1; font-size: 15px; line-height: 1.4; color: #e2e8f0; word-wrap: break-word; }
+  .entry-delete { background: transparent; border: none; color: #64748b; font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
+  .entry-delete:active { color: #ef4444; }
+  .entry input.edit-input { flex: 1; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px; padding: 6px 8px; font-size: 15px; font-family: inherit; }
+  .archive-day { background: #1e293b; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .archive-day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .archive-date { font-size: 15px; font-weight: 600; color: #f1f5f9; }
+  .archive-meta { font-size: 13px; color: #94a3b8; }
+  .archive-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .archive-btn { flex: 1; background: #334155; border: none; color: #e2e8f0; padding: 8px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .archive-btn.danger { background: #450a0a; color: #fca5a5; }
+  .action-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(to top, #0f172a 70%, rgba(15,23,42,0)); display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .mic-button { width: 72px; height: 72px; border-radius: 50%; border: none; background: #38bdf8; color: #0f172a; font-size: 32px; cursor: pointer; box-shadow: 0 8px 24px rgba(56,189,248,0.35); transition: transform 0.1s ease, background 0.15s ease; display: flex; align-items: center; justify-content: center; }
   .mic-button:active { transform: scale(0.95); }
-  .mic-button.listening { background: var(--danger); animation: pulse 1.2s ease-in-out infinite; box-shadow: 0 8px 24px rgba(239,68,68,0.4); }
+  .mic-button.listening { background: #ef4444; animation: pulse 1.2s ease-in-out infinite; box-shadow: 0 8px 24px rgba(239,68,68,0.4); }
   @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
   .secondary-actions { display: flex; gap: 8px; width: 100%; max-width: 400px; }
-  .secondary-btn { flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
-  .secondary-btn.primary { background: var(--surface-2); border-color: var(--border-2); }
-
-  /* Modal */
+  .secondary-btn { flex: 1; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .secondary-btn.primary { background: #334155; border-color: #475569; }
   .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: flex-end; justify-content: center; z-index: 100; }
   .modal-backdrop.show { display: flex; }
-  .modal { background: var(--surface); width: 100%; max-width: 500px; border-radius: 16px 16px 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); animation: slideUp 0.2s ease-out; max-height: 90vh; overflow-y: auto; }
+  .modal { background: #1e293b; width: 100%; max-width: 500px; border-radius: 16px 16px 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); animation: slideUp 0.2s ease-out; }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal h3 { margin: 0 0 12px; font-size: 16px; color: var(--text-dim); font-weight: 500; }
-  .modal-input { width: 100%; background: var(--surface-3); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 12px; font-size: 16px; font-family: inherit; margin-bottom: 12px; resize: none; min-height: 80px; }
-  .compact-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
-  .compact-row > div { display: flex; align-items: center; gap: 6px; }
-  .compact-row label { font-size: 13px; color: var(--text-dim); }
-  .compact-row input[type="time"] { background: var(--surface-3); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px 8px; font-size: 14px; font-family: inherit; }
-  .duration-row { margin-bottom: 12px; }
-  .duration-row .label { font-size: 13px; color: var(--text-dim); margin-bottom: 6px; }
-  .duration-options { display: flex; gap: 6px; flex-wrap: wrap; }
-  .dur-btn { flex: 1; min-width: 56px; background: var(--surface-3); border: 1px solid var(--border); color: var(--text); padding: 9px 6px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
-  .dur-btn.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-  .custom-duration { display: none; margin-top: 8px; align-items: center; gap: 8px; }
-  .custom-duration.show { display: flex; }
-  .custom-duration label { font-size: 13px; color: var(--text-dim); }
-  .custom-duration input { background: var(--surface-3); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 8px 10px; font-size: 15px; font-family: inherit; width: 90px; }
-  .modal-buttons { display: flex; gap: 8px; margin-top: 4px; }
+  .modal h3 { margin: 0 0 12px; font-size: 16px; color: #94a3b8; font-weight: 500; }
+  .modal-input { width: 100%; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 10px; padding: 12px; font-size: 16px; font-family: inherit; margin-bottom: 12px; resize: none; min-height: 80px; }
+  .modal-time-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+  .modal-time-row label { font-size: 14px; color: #94a3b8; }
+  .modal-time-row input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 15px; font-family: inherit; }
+  .modal-buttons { display: flex; gap: 8px; }
   .modal-btn { flex: 1; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
-  .modal-btn.cancel { background: var(--surface-2); color: var(--text); }
-  .modal-btn.confirm { background: var(--accent); color: var(--accent-text); }
-  .modal-btn.redo { background: var(--border-2); color: var(--text); }
-
-  /* Quick-edit list */
-  .quick-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-  .quick-item { display: flex; gap: 8px; align-items: center; background: var(--surface-3); padding: 8px; border-radius: 8px; }
-  .quick-item input.qi-name { flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 14px; font-family: inherit; }
-  .quick-item input.qi-mins { width: 70px; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 14px; font-family: inherit; }
-  .quick-item .qi-mins-label { font-size: 12px; color: var(--text-dim); }
-  .quick-item button.qi-del { background: transparent; border: none; color: var(--text-dimmer); font-size: 18px; cursor: pointer; padding: 0 4px; }
-  .qi-add { background: var(--surface-2); border: 1px dashed var(--border); color: var(--text-dim); padding: 10px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 14px; }
-
-  /* Toast */
-  .toast { position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--surface); color: var(--text); padding: 10px 16px; border-radius: 10px; font-size: 14px; box-shadow: 0 4px 12px var(--shadow); transition: transform 0.25s ease; z-index: 200; border: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .modal-btn.cancel { background: #334155; color: #e2e8f0; }
+  .modal-btn.confirm { background: #38bdf8; color: #0f172a; }
+  .modal-btn.redo { background: #475569; color: #e2e8f0; }
+  .toast { position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-100px); background: #1e293b; color: #e2e8f0; padding: 10px 16px; border-radius: 10px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.25s ease; z-index: 200; border: 1px solid #334155; }
   .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.error { border-color: var(--danger); }
-  .toast button { background: var(--accent); border: none; color: var(--accent-text); padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .toast.error { border-color: #ef4444; }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
-    <div class="header-left">
-      <div class="date" id="date"></div>
-      <div class="total">Today: <strong id="total">—</strong></div>
-    </div>
-    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">🌙</button>
+    <div class="date" id="date"></div>
+    <div class="total">Today: <strong id="total">—</strong></div>
   </div>
   <div class="tabs">
     <button class="tab active" data-view="today">Today</button>
     <button class="tab" data-view="history">History</button>
   </div>
   <div id="today-view"><div class="entries" id="entries"></div></div>
-  <div id="history-view" style="display: none;">
-    <div class="search-row"><input type="search" class="search-input" id="search-input" placeholder="Search entries…"></div>
-    <div id="archive-list"></div>
-  </div>
+  <div id="history-view" style="display: none;"><div id="archive-list"></div></div>
 </div>
-
 <div class="action-bar" id="action-bar">
-  <div class="quick-row" id="quick-row"></div>
-  <div class="mic-wrap">
-    <button class="mic-button" id="mic" aria-label="Record voice entry">🎤</button>
-    <div class="mic-meter" id="mic-meter">
-      <div class="mic-bar"></div><div class="mic-bar"></div><div class="mic-bar"></div>
-      <div class="mic-bar"></div><div class="mic-bar"></div><div class="mic-bar"></div>
-      <div class="mic-bar"></div><div class="mic-bar"></div><div class="mic-bar"></div>
-    </div>
-  </div>
+  <button class="mic-button" id="mic" aria-label="Record voice entry">🎤</button>
   <div class="secondary-actions">
     <button class="secondary-btn" id="manual-btn">Type entry</button>
     <button class="secondary-btn primary" id="export-btn">Export day</button>
   </div>
 </div>
-
-<!-- Voice / manual confirm modal -->
 <div class="modal-backdrop" id="confirm-modal">
   <div class="modal">
-    <h3 id="confirm-heading">I heard:</h3>
+    <h3>I heard:</h3>
     <textarea class="modal-input" id="confirm-text"></textarea>
-    <div class="compact-row">
-      <div><label>Time:</label><input type="time" id="confirm-time"></div>
-    </div>
-    <div class="duration-row">
-      <div class="label">Duration:</div>
-      <div class="duration-options" data-target="confirm">
-        <button class="dur-btn" data-mins="15">15m</button>
-        <button class="dur-btn" data-mins="30">30m</button>
-        <button class="dur-btn" data-mins="60">1h</button>
-        <button class="dur-btn" data-mins="120">2h</button>
-        <button class="dur-btn" data-mins="custom">Custom</button>
-      </div>
-      <div class="custom-duration" id="confirm-custom-row">
-        <label>Minutes:</label>
-        <input type="number" id="confirm-custom-mins" min="1" max="1440" inputmode="numeric">
-      </div>
-    </div>
+    <div class="modal-time-row"><label>Time:</label><input type="time" id="confirm-time"></div>
     <div class="modal-buttons">
       <button class="modal-btn cancel" id="confirm-cancel">Cancel</button>
       <button class="modal-btn redo" id="confirm-redo">🎤 Redo</button>
@@ -232,130 +100,63 @@
     </div>
   </div>
 </div>
-
-<!-- Edit duration modal -->
-<div class="modal-backdrop" id="edit-dur-modal">
+<div class="modal-backdrop" id="manual-modal">
   <div class="modal">
-    <h3>Edit duration</h3>
-    <div class="duration-row">
-      <div class="duration-options" data-target="editdur">
-        <button class="dur-btn" data-mins="15">15m</button>
-        <button class="dur-btn" data-mins="30">30m</button>
-        <button class="dur-btn" data-mins="60">1h</button>
-        <button class="dur-btn" data-mins="120">2h</button>
-        <button class="dur-btn" data-mins="custom">Custom</button>
-      </div>
-      <div class="custom-duration" id="editdur-custom-row">
-        <label>Minutes:</label>
-        <input type="number" id="editdur-custom-mins" min="0" max="1440" inputmode="numeric">
-      </div>
-    </div>
+    <h3>Add entry</h3>
+    <textarea class="modal-input" id="manual-text" placeholder="What are you logging?"></textarea>
+    <div class="modal-time-row"><label>Time:</label><input type="time" id="manual-time"></div>
     <div class="modal-buttons">
-      <button class="modal-btn cancel" id="editdur-cancel">Cancel</button>
-      <button class="modal-btn confirm" id="editdur-save">Save</button>
+      <button class="modal-btn cancel" id="manual-cancel">Cancel</button>
+      <button class="modal-btn confirm" id="manual-save">Log it</button>
     </div>
   </div>
 </div>
-
-<!-- Quick-edit modal -->
-<div class="modal-backdrop" id="quick-edit-modal">
-  <div class="modal">
-    <h3>Manage quick buttons</h3>
-    <div class="quick-list" id="quick-list"></div>
-    <button class="qi-add" id="qi-add">+ Add quick button</button>
-    <div class="modal-buttons" style="margin-top: 16px;">
-      <button class="modal-btn cancel" id="qe-cancel">Cancel</button>
-      <button class="modal-btn confirm" id="qe-save">Save</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 <script>
-  // ============ Storage ============
   const memStore = {};
   const storage = {
     get(key) { try { const v = localStorage.getItem(key); return v === null ? null : JSON.parse(v); } catch (e) { return memStore[key] === undefined ? null : memStore[key]; } },
     set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { memStore[key] = val; } }
   };
-  const TODAY_KEY = 'timelog_today', TODAY_DATE_KEY = 'timelog_today_date', ARCHIVE_KEY = 'timelog_archive', THEME_KEY = 'timelog_theme', QUICK_KEY = 'timelog_quick';
-
-  function migrateEntries(entries) {
-    return (entries || []).map(e => ({ ...e, durationMins: typeof e.durationMins === 'number' ? e.durationMins : 0 }));
-  }
-  let todayEntries = migrateEntries(storage.get(TODAY_KEY) || []);
+  const TODAY_KEY = 'timelog_today', TODAY_DATE_KEY = 'timelog_today_date', ARCHIVE_KEY = 'timelog_archive';
+  let todayEntries = storage.get(TODAY_KEY) || [];
   let todayDate = storage.get(TODAY_DATE_KEY) || todayString();
-  let archive = (storage.get(ARCHIVE_KEY) || []).map(d => ({ ...d, entries: migrateEntries(d.entries) }));
-  const expandedDays = new Set();
-  let searchQuery = '';
-  let quickButtons = storage.get(QUICK_KEY) || [
-    { name: 'Standup', mins: 15 },
-    { name: 'Email', mins: 30 },
-    { name: 'Lunch', mins: 60 },
-    { name: 'Break', mins: 15 }
-  ];
-
-  function checkDateRollover() {
-    const now = todayString();
-    if (todayDate !== now) {
-      if (todayEntries.length > 0) {
-        archive.unshift({ date: todayDate, entries: todayEntries });
-        storage.set(ARCHIVE_KEY, archive);
-      }
-      todayEntries = []; todayDate = now;
-      storage.set(TODAY_KEY, todayEntries); storage.set(TODAY_DATE_KEY, todayDate);
-      render();
-    }
+  let archive = storage.get(ARCHIVE_KEY) || [];
+  if (todayDate !== todayString() && todayEntries.length > 0) {
+    archive.unshift({ date: todayDate, entries: todayEntries });
+    storage.set(ARCHIVE_KEY, archive);
+    todayEntries = []; todayDate = todayString();
+    storage.set(TODAY_KEY, todayEntries); storage.set(TODAY_DATE_KEY, todayDate);
+  } else if (todayDate !== todayString()) {
+    todayDate = todayString(); storage.set(TODAY_DATE_KEY, todayDate);
   }
-  checkDateRollover();
-  setInterval(checkDateRollover, 60000);
-
-  // ============ Theme ============
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    document.getElementById('theme-toggle').textContent = theme === 'light' ? '☀️' : '🌙';
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'light' ? '#f8fafc' : '#0f172a');
-  }
-  let currentTheme = storage.get(THEME_KEY) || 'dark';
-  applyTheme(currentTheme);
-  document.getElementById('theme-toggle').addEventListener('click', () => {
-    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    storage.set(THEME_KEY, currentTheme);
-    applyTheme(currentTheme);
-  });
-
-  // ============ Helpers ============
   function todayString() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
   function pad(n) { return String(n).padStart(2, '0'); }
   function nowTimeString() { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
   function formatTime12(t) { const [h,m] = t.split(':').map(Number); const period = h>=12?'PM':'AM'; const h12 = h%12||12; return h12+':'+pad(m)+' '+period; }
   function formatDateLong(dateStr) { const [y,m,d] = dateStr.split('-').map(Number); const dt = new Date(y, m-1, d); return dt.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' }); }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-  function formatDuration(mins) {
-    if (!mins || mins <= 0) return '0m';
+  function totalDuration(entries) {
+    if (entries.length < 2) return null;
+    const sorted = [...entries].sort((a,b) => a.time.localeCompare(b.time));
+    const [h1,m1] = sorted[0].time.split(':').map(Number);
+    const [h2,m2] = sorted[sorted.length-1].time.split(':').map(Number);
+    const mins = (h2*60+m2) - (h1*60+m1);
+    if (mins <= 0) return null;
     const h = Math.floor(mins/60), m = mins%60;
-    if (h && m) return h+'h '+m+'m';
-    if (h) return h+'h';
-    return m+'m';
+    return (h>0 ? h+'h ' : '') + m + 'm';
   }
-  function totalMinutes(entries) { return entries.reduce((sum, e) => sum + (e.durationMins || 0), 0); }
   function saveToday() { storage.set(TODAY_KEY, todayEntries); storage.set(TODAY_DATE_KEY, todayDate); }
   function saveArchive() { storage.set(ARCHIVE_KEY, archive); }
-  function saveQuick() { storage.set(QUICK_KEY, quickButtons); }
-  function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-  // ============ Rendering ============
   const entriesEl = document.getElementById('entries');
   const archiveListEl = document.getElementById('archive-list');
   const dateEl = document.getElementById('date');
   const totalEl = document.getElementById('total');
-  const quickRowEl = document.getElementById('quick-row');
-
+  function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function render() {
     dateEl.textContent = formatDateLong(todayDate);
-    const totalMins = totalMinutes(todayEntries);
-    totalEl.textContent = totalMins > 0 ? formatDuration(totalMins) : (todayEntries.length === 0 ? '—' : '0m');
+    const total = totalDuration(todayEntries);
+    totalEl.textContent = total || (todayEntries.length === 0 ? '—' : 'logging');
     if (todayEntries.length === 0) {
       entriesEl.innerHTML = '<div class="empty">No entries yet today.<br>Tap the mic to start logging.</div>';
     } else {
@@ -364,434 +165,108 @@
       sorted.forEach(entry => {
         const el = document.createElement('div');
         el.className = 'entry'; el.dataset.id = entry.id;
-        el.innerHTML = `
-          <div class="entry-meta">
-            <div class="entry-time" data-action="edit-time">${formatTime12(entry.time)}</div>
-            <div class="entry-duration" data-action="edit-duration">${formatDuration(entry.durationMins)}</div>
-          </div>
-          <div class="entry-text" data-action="edit-text">${escapeHtml(entry.text)}</div>
-          <button class="entry-delete" data-action="delete" aria-label="Delete">×</button>
-        `;
+        el.innerHTML = `<div class="entry-time" data-action="edit-time">${formatTime12(entry.time)}</div><div class="entry-text" data-action="edit-text">${escapeHtml(entry.text)}</div><button class="entry-delete" data-action="delete" aria-label="Delete">×</button>`;
         entriesEl.appendChild(el);
       });
     }
     renderArchive();
-    renderQuick();
   }
-
-  function renderQuick() {
-    quickRowEl.innerHTML = '';
-    quickButtons.forEach((q, i) => {
-      const b = document.createElement('button');
-      b.className = 'quick-btn';
-      b.dataset.qidx = i;
-      b.textContent = q.name + ' · ' + formatDuration(q.mins);
-      quickRowEl.appendChild(b);
-    });
-    const edit = document.createElement('button');
-    edit.className = 'quick-btn edit';
-    edit.id = 'quick-edit-btn';
-    edit.textContent = '✏️ Edit';
-    quickRowEl.appendChild(edit);
-  }
-
-  function matchesSearch(entry, q) {
-    if (!q) return true;
-    return entry.text.toLowerCase().includes(q);
-  }
-  function highlightText(text, q) {
-    if (!q) return escapeHtml(text);
-    const idx = text.toLowerCase().indexOf(q);
-    if (idx < 0) return escapeHtml(text);
-    return escapeHtml(text.slice(0, idx)) + '<span class="highlight">' + escapeHtml(text.slice(idx, idx + q.length)) + '</span>' + escapeHtml(text.slice(idx + q.length));
-  }
-
   function renderArchive() {
-    const q = searchQuery.trim().toLowerCase();
     if (archive.length === 0) { archiveListEl.innerHTML = '<div class="empty">No archived days yet.<br>Past days will appear here after export.</div>'; return; }
     archiveListEl.innerHTML = '';
-    let anyShown = false;
     archive.forEach((day, idx) => {
-      const sortedEntries = [...day.entries].sort((a,b) => a.time.localeCompare(b.time));
-      const matching = q ? sortedEntries.filter(e => matchesSearch(e, q)) : sortedEntries;
-      // When searching, hide days with no matches
-      if (q && matching.length === 0) return;
-      anyShown = true;
-      const mins = totalMinutes(day.entries);
-      // Auto-expand when searching
-      const isExpanded = q ? true : expandedDays.has(day.date);
+      const total = totalDuration(day.entries);
       const el = document.createElement('div');
-      el.className = 'archive-day' + (isExpanded ? ' expanded' : '');
-      el.dataset.date = day.date;
-      el.dataset.idx = idx;
-
-      const entriesHtml = sortedEntries.length === 0
-        ? '<div class="empty" style="padding: 20px 0;">No entries</div>'
-        : sortedEntries.map(e => {
-            const hit = q && matchesSearch(e, q);
-            const textHtml = hit ? `<span class="highlight">${highlightText(e.text, q).replace(/<span class="highlight">|<\/span>/g, '')}</span>` : escapeHtml(e.text);
-            // simpler: re-use highlightText only on hit, plain escape otherwise
-            const finalText = hit ? highlightText(e.text, q) : escapeHtml(e.text);
-            return `
-              <div class="archive-entry" data-eid="${e.id}">
-                <div class="archive-entry-meta">
-                  <div class="archive-entry-time" data-aaction="edit-time">${formatTime12(e.time)}</div>
-                  <div class="archive-entry-duration" data-aaction="edit-duration">${formatDuration(e.durationMins)}</div>
-                </div>
-                <div class="archive-entry-text" data-aaction="edit-text">${finalText}</div>
-                <button class="archive-entry-delete" data-aaction="delete" aria-label="Delete">×</button>
-              </div>
-            `;
-          }).join('');
-
-      el.innerHTML = `
-        <div class="archive-day-header" data-toggle="${day.date}">
-          <div class="archive-day-left">
-            <span class="archive-chevron">▶</span>
-            <div class="archive-date">${formatDateLong(day.date)}</div>
-          </div>
-          <div class="archive-meta">${day.entries.length} entries${mins ? ' · ' + formatDuration(mins) : ''}</div>
-        </div>
-        <div class="archive-body">
-          <div class="archive-entries">${entriesHtml}</div>
-          <div class="archive-actions">
-            <button class="archive-btn" data-archive-action="export" data-idx="${idx}">Re-export</button>
-            <button class="archive-btn danger" data-archive-action="delete-day" data-idx="${idx}">Delete day</button>
-          </div>
-        </div>
-      `;
+      el.className = 'archive-day';
+      el.innerHTML = `<div class="archive-day-header"><div class="archive-date">${formatDateLong(day.date)}</div><div class="archive-meta">${day.entries.length} entries${total ? ' · ' + total : ''}</div></div><div class="archive-actions"><button class="archive-btn" data-archive-action="export" data-idx="${idx}">Re-export</button><button class="archive-btn danger" data-archive-action="delete" data-idx="${idx}">Delete</button></div>`;
       archiveListEl.appendChild(el);
     });
-    if (!anyShown) {
-      archiveListEl.innerHTML = '<div class="empty">No matches found.</div>';
-    }
   }
-
-  // ============ Duration picker ============
-  const PRESET_MINS = [15, 30, 60, 120];
-  const durState = { confirm: 15, editdur: 15 };
-
-  function setDuration(target, mins) {
-    durState[target] = mins;
-    const group = document.querySelector(`.duration-options[data-target="${target}"]`);
-    if (!group) return;
-    const customRow = document.getElementById(target + '-custom-row');
-    const customInput = document.getElementById(target + '-custom-mins');
-    const isPreset = PRESET_MINS.includes(mins);
-    group.querySelectorAll('.dur-btn').forEach(b => {
-      const v = b.dataset.mins;
-      if (v === 'custom') b.classList.toggle('active', !isPreset);
-      else b.classList.toggle('active', isPreset && parseInt(v,10) === mins);
-    });
-    if (isPreset) customRow.classList.remove('show');
-    else { customRow.classList.add('show'); customInput.value = mins; }
-  }
-
-  document.querySelectorAll('.duration-options').forEach(group => {
-    const target = group.dataset.target;
-    group.addEventListener('click', (e) => {
-      const btn = e.target.closest('.dur-btn');
-      if (!btn) return;
-      const val = btn.dataset.mins;
-      if (val === 'custom') {
-        const current = durState[target];
-        const startVal = PRESET_MINS.includes(current) ? '' : String(current || '');
-        const input = document.getElementById(target + '-custom-mins');
-        document.getElementById(target + '-custom-row').classList.add('show');
-        group.querySelectorAll('.dur-btn').forEach(b => b.classList.toggle('active', b.dataset.mins === 'custom'));
-        input.value = startVal;
-        setTimeout(() => input.focus(), 50);
-      } else {
-        setDuration(target, parseInt(val, 10));
-      }
-    });
-  });
-
-  ['confirm', 'editdur'].forEach(target => {
-    const input = document.getElementById(target + '-custom-mins');
-    input.addEventListener('input', () => {
-      const v = parseInt(input.value, 10);
-      if (!isNaN(v) && v >= 0) durState[target] = v;
-    });
-  });
-
-  // ============ Entry interactions (today) ============
-  let lastDeleted = null;
   entriesEl.addEventListener('click', (e) => {
     const entryEl = e.target.closest('.entry'); if (!entryEl) return;
     const id = entryEl.dataset.id; const action = e.target.dataset.action;
     const entry = todayEntries.find(x => x.id === id); if (!entry) return;
-    if (action === 'delete') {
-      lastDeleted = { kind: 'today', entry: { ...entry } };
-      todayEntries = todayEntries.filter(x => x.id !== id);
-      saveToday(); render();
-      showUndoToast('Entry deleted');
-    } else if (action === 'edit-time') inlineEditTime(e.target, entry, () => { saveToday(); render(); });
-    else if (action === 'edit-text') inlineEditText(e.target, entry, () => { saveToday(); render(); });
-    else if (action === 'edit-duration') openEditDuration(entry, () => { saveToday(); render(); });
-  });
-
-  // ============ Entry interactions (archive) ============
-  archiveListEl.addEventListener('click', async (e) => {
-    // Action buttons first
-    const actionBtn = e.target.closest('[data-archive-action]');
-    if (actionBtn) {
-      e.stopPropagation();
-      const action = actionBtn.dataset.archiveAction;
-      const idx = parseInt(actionBtn.dataset.idx, 10);
-      const day = archive[idx]; if (!day) return;
-      if (action === 'export') await shareCSV(day.date, day.entries);
-      else if (action === 'delete-day') {
-        if (confirm('Delete archived log for ' + formatDateLong(day.date) + '?')) {
-          expandedDays.delete(day.date);
-          archive.splice(idx, 1); saveArchive(); renderArchive();
-        }
-      }
-      return;
-    }
-    // Entry-level actions
-    const entryEl = e.target.closest('.archive-entry');
-    if (entryEl) {
-      e.stopPropagation();
-      const dayEl = entryEl.closest('.archive-day');
-      const dayIdx = parseInt(dayEl.dataset.idx, 10);
-      const eid = entryEl.dataset.eid;
-      const day = archive[dayIdx]; if (!day) return;
-      const entry = day.entries.find(x => x.id === eid); if (!entry) return;
-      const aaction = e.target.dataset.aaction;
-      if (aaction === 'delete') {
-        lastDeleted = { kind: 'archive', dayIdx, entry: { ...entry } };
-        day.entries = day.entries.filter(x => x.id !== eid);
-        saveArchive(); renderArchive();
-        showUndoToast('Entry deleted');
-      } else if (aaction === 'edit-time') inlineEditTime(e.target, entry, () => { saveArchive(); renderArchive(); });
-      else if (aaction === 'edit-text') inlineEditText(e.target, entry, () => { saveArchive(); renderArchive(); });
-      else if (aaction === 'edit-duration') openEditDuration(entry, () => { saveArchive(); renderArchive(); });
-      return;
-    }
-    // Header toggle
-    const header = e.target.closest('.archive-day-header');
-    if (header) {
-      const date = header.dataset.toggle;
-      if (expandedDays.has(date)) expandedDays.delete(date);
-      else expandedDays.add(date);
-      renderArchive();
+    if (action === 'delete') { todayEntries = todayEntries.filter(x => x.id !== id); saveToday(); render(); }
+    else if (action === 'edit-time') {
+      const input = document.createElement('input');
+      input.type = 'time'; input.value = entry.time;
+      input.style.cssText = 'background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:6px;padding:4px 6px;font-size:13px;font-family:inherit;min-width:64px;';
+      e.target.replaceWith(input); input.focus();
+      const commit = () => { if (input.value) { entry.time = input.value; saveToday(); } render(); };
+      input.addEventListener('blur', commit); input.addEventListener('change', commit);
+    } else if (action === 'edit-text') {
+      const input = document.createElement('input');
+      input.className = 'edit-input'; input.type = 'text'; input.value = entry.text;
+      e.target.replaceWith(input); input.focus(); input.setSelectionRange(input.value.length, input.value.length);
+      const commit = () => { const v = input.value.trim(); if (v) { entry.text = v; saveToday(); } render(); };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); } if (ev.key === 'Escape') render(); });
     }
   });
-
-  function inlineEditTime(target, entry, onCommit) {
-    const input = document.createElement('input');
-    input.type = 'time'; input.value = entry.time;
-    input.style.cssText = 'background:var(--surface-3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 6px;font-size:13px;font-family:inherit;min-width:64px;';
-    target.replaceWith(input); input.focus();
-    const commit = () => { if (input.value) { entry.time = input.value; onCommit(); } else onCommit(); };
-    input.addEventListener('blur', commit); input.addEventListener('change', commit);
-  }
-  function inlineEditText(target, entry, onCommit) {
-    const input = document.createElement('input');
-    input.className = 'edit-input'; input.type = 'text'; input.value = entry.text;
-    target.replaceWith(input); input.focus(); input.setSelectionRange(input.value.length, input.value.length);
-    const commit = () => { const v = input.value.trim(); if (v) entry.text = v; onCommit(); };
-    input.addEventListener('blur', commit);
-    input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); } if (ev.key === 'Escape') onCommit(); });
-  }
-
-  function addEntry(text, time, durationMins) {
-    todayEntries.push({ id: uid(), text: text.trim(), time: time || nowTimeString(), durationMins: durationMins || 0 });
+  function addEntry(text, time) {
+    todayEntries.push({ id: uid(), text: text.trim(), time: time || nowTimeString() });
     saveToday(); render(); showToast('Logged');
   }
-
-  // ============ Edit duration modal ============
-  const editDurModal = document.getElementById('edit-dur-modal');
-  let editingEntry = null; let editingOnCommit = null;
-  function openEditDuration(entry, onCommit) {
-    editingEntry = entry; editingOnCommit = onCommit;
-    setDuration('editdur', entry.durationMins || 0);
-    editDurModal.classList.add('show');
-  }
-  document.getElementById('editdur-cancel').addEventListener('click', () => { editDurModal.classList.remove('show'); editingEntry = null; });
-  document.getElementById('editdur-save').addEventListener('click', () => {
-    if (editingEntry) {
-      editingEntry.durationMins = Math.max(0, durState.editdur || 0);
-      if (editingOnCommit) editingOnCommit();
-    }
-    editDurModal.classList.remove('show'); editingEntry = null; editingOnCommit = null;
-  });
-
-  // ============ Confirm modal (used for voice, manual, and quick) ============
-  const confirmModal = document.getElementById('confirm-modal');
-  const confirmHeading = document.getElementById('confirm-heading');
-  const confirmText = document.getElementById('confirm-text');
-  const confirmTime = document.getElementById('confirm-time');
-
-  function openConfirm(text, opts) {
-    opts = opts || {};
-    confirmHeading.textContent = opts.heading || 'I heard:';
-    confirmText.value = text || '';
-    confirmTime.value = nowTimeString();
-    setDuration('confirm', opts.mins || 15);
-    confirmModal.classList.add('show');
-    if (opts.focusText) setTimeout(() => confirmText.focus(), 100);
-  }
-  document.getElementById('confirm-cancel').addEventListener('click', () => confirmModal.classList.remove('show'));
-  document.getElementById('confirm-redo').addEventListener('click', () => { confirmModal.classList.remove('show'); setTimeout(startListening, 200); });
-  document.getElementById('confirm-save').addEventListener('click', () => {
-    const text = confirmText.value.trim(); if (!text) return;
-    addEntry(text, confirmTime.value || nowTimeString(), durState.confirm);
-    confirmModal.classList.remove('show');
-  });
-
-  // Manual entry button reuses confirm modal
+  const manualModal = document.getElementById('manual-modal');
+  const manualText = document.getElementById('manual-text');
+  const manualTime = document.getElementById('manual-time');
   document.getElementById('manual-btn').addEventListener('click', () => {
-    openConfirm('', { heading: 'Add entry', focusText: true });
-    document.getElementById('confirm-redo').style.display = 'none';
+    manualText.value = ''; manualTime.value = nowTimeString();
+    manualModal.classList.add('show'); setTimeout(() => manualText.focus(), 100);
   });
-  // Reset redo visibility on any open
-  const observer = new MutationObserver(() => {
-    if (confirmModal.classList.contains('show')) {
-      const isVoice = confirmHeading.textContent === 'I heard:';
-      document.getElementById('confirm-redo').style.display = isVoice ? '' : 'none';
-    }
-  });
-  observer.observe(confirmModal, { attributes: true, attributeFilter: ['class'] });
-
-  // ============ Quick buttons ============
-  quickRowEl.addEventListener('click', (e) => {
-    if (e.target.id === 'quick-edit-btn') { openQuickEditor(); return; }
-    const btn = e.target.closest('.quick-btn'); if (!btn) return;
-    const idx = parseInt(btn.dataset.qidx, 10);
-    if (isNaN(idx)) return;
-    const q = quickButtons[idx]; if (!q) return;
-    openConfirm(q.name, { heading: 'Add entry', mins: q.mins });
+  document.getElementById('manual-cancel').addEventListener('click', () => manualModal.classList.remove('show'));
+  document.getElementById('manual-save').addEventListener('click', () => {
+    const text = manualText.value.trim(); if (!text) return;
+    addEntry(text, manualTime.value || nowTimeString());
+    manualModal.classList.remove('show');
   });
 
-  // ============ Quick editor ============
-  const quickEditModal = document.getElementById('quick-edit-modal');
-  const quickListEl = document.getElementById('quick-list');
-  let quickDraft = [];
-  function openQuickEditor() {
-    quickDraft = quickButtons.map(q => ({ ...q }));
-    renderQuickEditor();
-    quickEditModal.classList.add('show');
-  }
-  function renderQuickEditor() {
-    quickListEl.innerHTML = '';
-    quickDraft.forEach((q, i) => {
-      const row = document.createElement('div');
-      row.className = 'quick-item';
-      row.innerHTML = `
-        <input type="text" class="qi-name" data-idx="${i}" value="${escapeHtml(q.name)}" placeholder="Label">
-        <input type="number" class="qi-mins" data-idx="${i}" value="${q.mins}" min="0" max="1440" inputmode="numeric">
-        <span class="qi-mins-label">min</span>
-        <button class="qi-del" data-idx="${i}" aria-label="Delete">×</button>
-      `;
-      quickListEl.appendChild(row);
-    });
-  }
-  quickListEl.addEventListener('input', (e) => {
-    const idx = parseInt(e.target.dataset.idx, 10);
-    if (isNaN(idx)) return;
-    if (e.target.classList.contains('qi-name')) quickDraft[idx].name = e.target.value;
-    else if (e.target.classList.contains('qi-mins')) {
-      const v = parseInt(e.target.value, 10);
-      quickDraft[idx].mins = isNaN(v) ? 0 : Math.max(0, v);
-    }
-  });
-  quickListEl.addEventListener('click', (e) => {
-    const del = e.target.closest('.qi-del'); if (!del) return;
-    const idx = parseInt(del.dataset.idx, 10);
-    quickDraft.splice(idx, 1);
-    renderQuickEditor();
-  });
-  document.getElementById('qi-add').addEventListener('click', () => {
-    quickDraft.push({ name: 'New', mins: 15 });
-    renderQuickEditor();
-    const inputs = quickListEl.querySelectorAll('.qi-name');
-    const last = inputs[inputs.length - 1];
-    if (last) { last.focus(); last.select(); }
-  });
-  document.getElementById('qe-cancel').addEventListener('click', () => quickEditModal.classList.remove('show'));
-  document.getElementById('qe-save').addEventListener('click', () => {
-    quickButtons = quickDraft.map(q => ({ name: (q.name || '').trim() || 'Untitled', mins: Math.max(0, q.mins || 0) }));
-    saveQuick(); renderQuick();
-    quickEditModal.classList.remove('show');
-  });
-
-  // ============ Voice recognition with audio meter ============
+  // ============ Voice recognition (iOS-hardened) ============
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const micBtn = document.getElementById('mic');
-  const micMeter = document.getElementById('mic-meter');
-  const micBars = micMeter.querySelectorAll('.mic-bar');
+  const confirmModal = document.getElementById('confirm-modal');
+  const confirmText = document.getElementById('confirm-text');
+  const confirmTime = document.getElementById('confirm-time');
   let recognition = null;
   let listening = false;
   let lastTranscript = '';
   let listenTimeout = null;
   let resultReceived = false;
-  let audioCtx = null;
-  let micStream = null;
-  let analyser = null;
-  let meterRaf = null;
 
   if (!SpeechRecognition) {
     micBtn.disabled = true;
     micBtn.style.opacity = '0.5';
   }
 
-  async function startMeter() {
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const source = audioCtx.createMediaStreamSource(micStream);
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      const data = new Uint8Array(analyser.frequencyBinCount);
-      micMeter.classList.add('active');
-      const tick = () => {
-        if (!analyser) return;
-        analyser.getByteFrequencyData(data);
-        // Compute level per bar across the spectrum
-        const segLen = Math.floor(data.length / micBars.length);
-        micBars.forEach((bar, i) => {
-          let sum = 0;
-          for (let j = 0; j < segLen; j++) sum += data[i*segLen + j];
-          const avg = sum / segLen;
-          const h = Math.max(4, Math.min(16, (avg / 255) * 24));
-          bar.style.height = h + 'px';
-        });
-        meterRaf = requestAnimationFrame(tick);
-      };
-      tick();
-    } catch (e) {
-      // Permission denied or unsupported; the recognition still works without meter
-    }
-  }
-  function stopMeter() {
-    micMeter.classList.remove('active');
-    if (meterRaf) cancelAnimationFrame(meterRaf);
-    meterRaf = null;
-    if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-    if (audioCtx) { try { audioCtx.close(); } catch(e){} audioCtx = null; }
-    analyser = null;
-    micBars.forEach(b => b.style.height = '4px');
-  }
-
   function startListening() {
-    if (!SpeechRecognition) { showToast('Voice not supported on this device', true); return; }
+    if (!SpeechRecognition) {
+      showToast('Voice not supported on this device', true);
+      return;
+    }
     if (listening) return;
-    try { recognition = new SpeechRecognition(); }
-    catch (e) { showToast('Could not create recognizer', true); return; }
+
+    try {
+      recognition = new SpeechRecognition();
+    } catch (e) {
+      showToast('Could not create recognizer', true);
+      return;
+    }
+
     recognition.lang = navigator.language || 'en-US';
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
     recognition.continuous = false;
+
     lastTranscript = '';
     resultReceived = false;
     listening = true;
     micBtn.classList.add('listening');
     micBtn.textContent = '●';
-    recognition.onstart = () => { showToast('Listening…'); startMeter(); };
+
+    recognition.onstart = () => {
+      showToast('Listening…');
+    };
+
     recognition.onresult = (event) => {
       resultReceived = true;
       let finalText = '', interimText = '';
@@ -803,26 +278,46 @@
       const combined = (finalText || interimText).trim();
       if (combined) lastTranscript = combined;
     };
+
     recognition.onerror = (event) => {
       const err = event.error;
       const captured = lastTranscript;
       finishListening();
-      if (err === 'not-allowed' || err === 'service-not-allowed') showToast('Microphone permission denied', true);
-      else if (err === 'no-speech') showToast("Didn't catch that — try again", true);
-      else if (err === 'aborted') { if (captured) openConfirm(captured); }
-      else showToast('Voice error: ' + err, true);
+      if (err === 'not-allowed' || err === 'service-not-allowed') {
+        showToast('Microphone permission denied', true);
+      } else if (err === 'no-speech') {
+        showToast("Didn't catch that — try again", true);
+      } else if (err === 'aborted') {
+        if (captured) openConfirm(captured);
+      } else {
+        showToast('Voice error: ' + err, true);
+      }
     };
+
     recognition.onend = () => {
       const captured = lastTranscript;
       const had = resultReceived;
       finishListening();
-      if (captured) openConfirm(captured);
-      else if (had) showToast('Heard nothing — try again', true);
-      else showToast("Didn't catch anything — try again", true);
+      if (captured) {
+        openConfirm(captured);
+      } else if (had) {
+        showToast('Heard nothing — try again', true);
+      } else {
+        showToast("Didn't catch anything — try again", true);
+      }
     };
-    try { recognition.start(); }
-    catch (e) { finishListening(); showToast('Could not start mic: ' + e.message, true); return; }
-    listenTimeout = setTimeout(() => { if (listening) forceStop(); }, 60000);
+
+    try {
+      recognition.start();
+    } catch (e) {
+      finishListening();
+      showToast('Could not start mic: ' + e.message, true);
+      return;
+    }
+
+    listenTimeout = setTimeout(() => {
+      if (listening) forceStop();
+    }, 30000);
   }
 
   function finishListening() {
@@ -831,7 +326,6 @@
     micBtn.textContent = '🎤';
     if (listenTimeout) { clearTimeout(listenTimeout); listenTimeout = null; }
     recognition = null;
-    stopMeter();
   }
 
   function forceStop() {
@@ -849,35 +343,44 @@
     }, 500);
   }
 
-  micBtn.addEventListener('click', () => { if (listening) forceStop(); else startListening(); });
+  micBtn.addEventListener('click', () => {
+    if (listening) {
+      forceStop();
+    } else {
+      startListening();
+    }
+  });
 
-  // ============ Search ============
-  const searchInput = document.getElementById('search-input');
-  searchInput.addEventListener('input', () => {
-    searchQuery = searchInput.value;
-    renderArchive();
+  function openConfirm(text) {
+    confirmText.value = text;
+    confirmTime.value = nowTimeString();
+    confirmModal.classList.add('show');
+  }
+  document.getElementById('confirm-cancel').addEventListener('click', () => confirmModal.classList.remove('show'));
+  document.getElementById('confirm-redo').addEventListener('click', () => { confirmModal.classList.remove('show'); setTimeout(startListening, 200); });
+  document.getElementById('confirm-save').addEventListener('click', () => {
+    const text = confirmText.value.trim(); if (!text) return;
+    addEntry(text, confirmTime.value || nowTimeString());
+    confirmModal.classList.remove('show');
   });
 
   // ============ Export ============
   function csvCell(v) { const s = String(v); if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"'; return s; }
   function buildCSV(date, entries) {
     const sorted = [...entries].sort((a,b) => a.time.localeCompare(b.time));
-    const rows = [['Date', 'Time', 'Duration (min)', 'Entry']];
-    sorted.forEach(e => rows.push([date, formatTime12(e.time), e.durationMins || 0, e.text]));
-    const total = totalMinutes(sorted);
-    rows.push(['', '', total, 'TOTAL']);
+    const rows = [['Date', 'Time', 'Entry']];
+    sorted.forEach(e => rows.push([date, formatTime12(e.time), e.text]));
     return rows.map(r => r.map(csvCell).join(',')).join('\r\n');
   }
   async function shareCSV(date, entries) {
     const csv = buildCSV(date, entries);
-    const csvWithBom = '\uFEFF' + csv;
     const filename = 'timelog-' + date + '.csv';
-    const file = new File([csvWithBom], filename, { type: 'text/csv;charset=utf-8' });
+    const file = new File([csv], filename, { type: 'text/csv' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ title: 'Time Log ' + date, files: [file] }); return true; }
+      try { await navigator.share({ title: 'Time Log ' + date, text: 'Time log for ' + formatDateLong(date), files: [file] }); return true; }
       catch (e) { if (e.name === 'AbortError') return false; }
     }
-    const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename;
@@ -896,8 +399,17 @@
       showToast('Exported & archived');
     }
   });
-
-  // ============ Tabs ============
+  archiveListEl.addEventListener('click', async (e) => {
+    const action = e.target.dataset.archiveAction; if (!action) return;
+    const idx = parseInt(e.target.dataset.idx, 10);
+    const day = archive[idx]; if (!day) return;
+    if (action === 'export') await shareCSV(day.date, day.entries);
+    else if (action === 'delete') {
+      if (confirm('Delete archived log for ' + formatDateLong(day.date) + '?')) {
+        archive.splice(idx, 1); saveArchive(); renderArchive();
+      }
+    }
+  });
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
@@ -905,74 +417,17 @@
       const view = t.dataset.view;
       document.getElementById('today-view').style.display = view === 'today' ? '' : 'none';
       document.getElementById('history-view').style.display = view === 'history' ? '' : 'none';
-      // Keep action bar visible on both views now (you might want to log while reviewing history)
+      document.getElementById('action-bar').style.display = view === 'today' ? '' : 'none';
     });
   });
-
-  // ============ Toast (with optional undo) ============
   let toastTimer;
   function showToast(msg, isError) {
     const t = document.getElementById('toast');
-    t.innerHTML = '';
-    t.textContent = msg;
-    t.classList.toggle('error', !!isError);
+    t.textContent = msg; t.classList.toggle('error', !!isError);
     t.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
   }
-  function showUndoToast(msg) {
-    const t = document.getElementById('toast');
-    t.innerHTML = '';
-    t.classList.remove('error');
-    const span = document.createElement('span'); span.textContent = msg;
-    const btn = document.createElement('button'); btn.textContent = 'Undo';
-    btn.addEventListener('click', () => {
-      if (!lastDeleted) return;
-      if (lastDeleted.kind === 'today') {
-        todayEntries.push(lastDeleted.entry); saveToday(); render();
-      } else if (lastDeleted.kind === 'archive') {
-        const day = archive[lastDeleted.dayIdx];
-        if (day) { day.entries.push(lastDeleted.entry); saveArchive(); renderArchive(); }
-      }
-      lastDeleted = null;
-      t.classList.remove('show');
-    });
-    t.appendChild(span); t.appendChild(btn);
-    t.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { t.classList.remove('show'); lastDeleted = null; }, 5000);
-  }
-
-  // ============ Keyboard shortcuts ============
-  document.addEventListener('keydown', (e) => {
-    const tag = (e.target.tagName || '').toLowerCase();
-    const inField = tag === 'input' || tag === 'textarea' || e.target.isContentEditable;
-    // Escape closes modals
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.modal-backdrop.show').forEach(m => m.classList.remove('show'));
-      return;
-    }
-    if (inField) return;
-    // Space = mic toggle
-    if (e.code === 'Space') {
-      e.preventDefault();
-      if (listening) forceStop(); else startListening();
-      return;
-    }
-    // Cmd/Ctrl+N = manual entry
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
-      e.preventDefault();
-      document.getElementById('manual-btn').click();
-      return;
-    }
-    // Cmd/Ctrl+E = export
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') {
-      e.preventDefault();
-      document.getElementById('export-btn').click();
-      return;
-    }
-  });
-
   render();
 </script>
 </body>
