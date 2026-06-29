@@ -1,0 +1,428 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "appName": "Kane's Number World",
+    "schemaNotes": [
+      "difficulty: 1=easy (counting/recognition), 2=medium (basic addition/subtraction), 3=hard (larger numbers/multiplication)",
+      "type options: multiple_choice, tap_biggest, tap_smallest, fill_in, true_false, count_objects, sort_asc, sort_desc",
+      "flavour: short thematic sentence tying the question to the world theme — keep it fun and 6-year-old readable",
+      "reward.type options: card, badge, vehicle, fact",
+      "For multiple_choice: provide 'options' array and 'answer' matching one option exactly",
+      "For fill_in: provide 'equation' with a '?' placeholder and 'answer' as a number",
+      "For tap_biggest / tap_smallest: provide 'values' array of 3-4 numbers",
+      "For true_false: provide 'statement' and 'answer' as true or false",
+      "For sort_asc / sort_desc: provide 'values' array of 4 numbers to sort",
+      "For count_objects: provide 'count' (the correct number) and 'emoji' for the object to display"
+    ]
+  },
+
+  "settings": {
+    "questionsPerSession": 5,
+    "starThresholds": {
+      "three": 5,
+      "two": 3,
+      "one": 1
+    },
+    "streakMilestones": [3, 7, 14, 30]
+  },
+
+  "worlds": [
+
+    {
+      "id": "dino",
+      "name": "Dino Domain",
+      "emoji": "🦕",
+      "colour": "#4CAF50",
+      "description": "Journey through the prehistoric jungle and collect mighty dinosaurs!",
+      "unlockOrder": 1,
+      "rewards": [
+        { "id": "dino-r01", "type": "card", "name": "T-Rex", "emoji": "🦖", "fact": "T-Rex had teeth as big as bananas!", "unlockedAtStars": 3 },
+        { "id": "dino-r02", "type": "card", "name": "Triceratops", "emoji": "🦕", "fact": "Triceratops had 3 horns and a giant frill on its head!", "unlockedAtStars": 6 },
+        { "id": "dino-r03", "type": "card", "name": "Stegosaurus", "emoji": "🦴", "fact": "Stegosaurus had a brain the size of a walnut!", "unlockedAtStars": 9 },
+        { "id": "dino-r04", "type": "card", "name": "Velociraptor", "emoji": "🐾", "fact": "Velociraptors were actually about the size of a turkey!", "unlockedAtStars": 12 },
+        { "id": "dino-r05", "type": "badge", "name": "Dino Master", "emoji": "🏆", "fact": "You've conquered Dino Domain!", "unlockedAtStars": 15 }
+      ],
+      "challenges": [
+        {
+          "id": "d001", "type": "multiple_choice", "difficulty": 1,
+          "question": "Which number is bigger?",
+          "options": [7, 4, 2, 9],
+          "answer": 9,
+          "flavour": "The biggest T-Rex needs the most food — pick the biggest number!"
+        },
+        {
+          "id": "d002", "type": "multiple_choice", "difficulty": 1,
+          "question": "Count the eggs in the nest. How many are there?",
+          "options": [3, 5, 4, 6],
+          "answer": 5,
+          "flavour": "A mama dino laid some eggs. Can you count them? 🥚🥚🥚🥚🥚",
+          "emoji": "🥚",
+          "count": 5
+        },
+        {
+          "id": "d003", "type": "fill_in", "difficulty": 1,
+          "equation": "3 + ? = 7",
+          "answer": 4,
+          "flavour": "A baby dino found 3 berries, then found some more and had 7. How many did it find?"
+        },
+        {
+          "id": "d004", "type": "tap_biggest", "difficulty": 1,
+          "question": "Tap the biggest number!",
+          "values": [2, 8, 5],
+          "answer": 8,
+          "flavour": "The T-Rex is the biggest dino — tap its number!"
+        },
+        {
+          "id": "d005", "type": "true_false", "difficulty": 1,
+          "statement": "10 is bigger than 6",
+          "answer": true,
+          "flavour": "A herd of 10 dinos vs a herd of 6 — which is more?"
+        },
+        {
+          "id": "d006", "type": "multiple_choice", "difficulty": 1,
+          "question": "What comes after 8?",
+          "options": [6, 7, 9, 10],
+          "answer": 9,
+          "flavour": "The dino is counting its steps through the jungle. What's next after 8?"
+        },
+        {
+          "id": "d007", "type": "sort_asc", "difficulty": 1,
+          "question": "Sort the dino ages from youngest to oldest!",
+          "values": [5, 1, 8, 3],
+          "answer": [1, 3, 5, 8],
+          "flavour": "Line up the baby dinos in order — smallest number first!"
+        },
+        {
+          "id": "d008", "type": "fill_in", "difficulty": 2,
+          "equation": "6 + 7 = ?",
+          "answer": 13,
+          "flavour": "6 raptors met 7 more in the forest. How many raptors is that?"
+        },
+        {
+          "id": "d009", "type": "multiple_choice", "difficulty": 2,
+          "question": "A T-Rex has 14 teeth. It loses 5. How many are left?",
+          "options": [7, 8, 9, 10],
+          "answer": 9,
+          "flavour": "Crunch! The T-Rex lost some teeth. How many does it have now?"
+        },
+        {
+          "id": "d010", "type": "tap_smallest", "difficulty": 2,
+          "question": "Tap the smallest number!",
+          "values": [12, 7, 19, 4],
+          "answer": 4,
+          "flavour": "Find the tiniest baby dino — tap its number!"
+        },
+        {
+          "id": "d011", "type": "fill_in", "difficulty": 2,
+          "equation": "15 - ? = 9",
+          "answer": 6,
+          "flavour": "A dino herd had 15 members. Some wandered off and now there are 9. How many left?"
+        },
+        {
+          "id": "d012", "type": "multiple_choice", "difficulty": 2,
+          "question": "What is double 7?",
+          "options": [12, 13, 14, 15],
+          "answer": 14,
+          "flavour": "A Triceratops has 3 horns. A TWIN Triceratops joins! How many horns between them... actually, what is double 7?"
+        },
+        {
+          "id": "d013", "type": "sort_desc", "difficulty": 2,
+          "question": "Sort these dino weights from heaviest to lightest!",
+          "values": [11, 4, 17, 8],
+          "answer": [17, 11, 8, 4],
+          "flavour": "The biggest dino goes first — sort from biggest to smallest!"
+        },
+        {
+          "id": "d014", "type": "fill_in", "difficulty": 3,
+          "equation": "4 × 3 = ?",
+          "answer": 12,
+          "flavour": "4 dinos each have 3 eggs. How many eggs in total?"
+        },
+        {
+          "id": "d015", "type": "multiple_choice", "difficulty": 3,
+          "question": "A dinosaur ran 24 metres. It then ran half that distance again. How far in total?",
+          "options": [30, 34, 36, 38],
+          "answer": 36,
+          "flavour": "The speedy raptor is on the move! How far did it run altogether?"
+        },
+        {
+          "id": "d016", "type": "fill_in", "difficulty": 3,
+          "equation": "5 × ? = 25",
+          "answer": 5,
+          "flavour": "5 dino eggs in each nest — if there are 25 eggs, how many nests?"
+        },
+        {
+          "id": "d017", "type": "multiple_choice", "difficulty": 3,
+          "question": "What is 37 + 18?",
+          "options": [53, 54, 55, 56],
+          "answer": 55,
+          "flavour": "A T-Rex found 37 bones, then found 18 more. How many bones total?"
+        },
+        {
+          "id": "d018", "type": "true_false", "difficulty": 3,
+          "statement": "6 × 4 = 22",
+          "answer": false,
+          "flavour": "6 groups of 4 dinos — is that really 22?"
+        }
+      ]
+    },
+
+    {
+      "id": "hero",
+      "name": "Hero HQ",
+      "emoji": "🦸",
+      "colour": "#2196F3",
+      "description": "Train at Hero HQ and unlock mighty superheroes!",
+      "unlockOrder": 2,
+      "rewards": [
+        { "id": "hero-r01", "type": "badge", "name": "Speed Badge", "emoji": "⚡", "fact": "The fastest superhero can run 1000 miles per hour!", "unlockedAtStars": 3 },
+        { "id": "hero-r02", "type": "card", "name": "Mega Lifter", "emoji": "💪", "fact": "Some heroes can lift a whole building!", "unlockedAtStars": 6 },
+        { "id": "hero-r03", "type": "badge", "name": "Shield Badge", "emoji": "🛡️", "fact": "A hero's shield can bounce off anything!", "unlockedAtStars": 9 },
+        { "id": "hero-r04", "type": "card", "name": "Sky Flyer", "emoji": "🦅", "fact": "Flying heroes can reach 30,000 feet in the air!", "unlockedAtStars": 12 },
+        { "id": "hero-r05", "type": "badge", "name": "Hero Master", "emoji": "🌟", "fact": "You've mastered Hero HQ!", "unlockedAtStars": 15 }
+      ],
+      "challenges": [
+        {
+          "id": "h001", "type": "multiple_choice", "difficulty": 1,
+          "question": "A hero has 5 superpowers. She learns 3 more. How many powers now?",
+          "options": [6, 7, 8, 9],
+          "answer": 8,
+          "flavour": "She's training hard at Hero HQ!"
+        },
+        {
+          "id": "h002", "type": "tap_biggest", "difficulty": 1,
+          "question": "Which hero has the most strength points? Tap the biggest number!",
+          "values": [6, 3, 9],
+          "answer": 9,
+          "flavour": "The strongest hero wins! Find the biggest number."
+        },
+        {
+          "id": "h003", "type": "true_false", "difficulty": 1,
+          "statement": "5 + 5 = 10",
+          "answer": true,
+          "flavour": "Two teams of 5 heroes join forces. Is that 10 heroes?"
+        },
+        {
+          "id": "h004", "type": "fill_in", "difficulty": 1,
+          "equation": "10 - ? = 6",
+          "answer": 4,
+          "flavour": "10 heroes set off on a mission, but some stayed behind. Only 6 went. How many stayed?"
+        },
+        {
+          "id": "h005", "type": "sort_asc", "difficulty": 1,
+          "question": "Sort the heroes by speed from slowest to fastest!",
+          "values": [9, 2, 6, 4],
+          "answer": [2, 4, 6, 9],
+          "flavour": "Line up the heroes from slowest to fastest — smallest number first!"
+        },
+        {
+          "id": "h006", "type": "multiple_choice", "difficulty": 1,
+          "question": "What is 4 + 6?",
+          "options": [8, 9, 10, 11],
+          "answer": 10,
+          "flavour": "4 heroes from the East, 6 heroes from the West — how many altogether?"
+        },
+        {
+          "id": "h007", "type": "fill_in", "difficulty": 2,
+          "equation": "8 + 9 = ?",
+          "answer": 17,
+          "flavour": "8 flying heroes plus 9 running heroes — how many heroes on the mission?"
+        },
+        {
+          "id": "h008", "type": "multiple_choice", "difficulty": 2,
+          "question": "A hero had 20 energy points. She used 13. How many left?",
+          "options": [5, 6, 7, 8],
+          "answer": 7,
+          "flavour": "Fighting villains uses up energy — how much does she have left?"
+        },
+        {
+          "id": "h009", "type": "tap_smallest", "difficulty": 2,
+          "question": "The villain with the LEAST minions is the weakest. Tap that number!",
+          "values": [15, 8, 23, 11],
+          "answer": 8,
+          "flavour": "Find the weakest villain — tap the smallest number!"
+        },
+        {
+          "id": "h010", "type": "true_false", "difficulty": 2,
+          "statement": "14 - 6 = 9",
+          "answer": false,
+          "flavour": "Did the hero do the maths right to defeat the villain?"
+        },
+        {
+          "id": "h011", "type": "fill_in", "difficulty": 2,
+          "equation": "? + 8 = 20",
+          "answer": 12,
+          "flavour": "The hero needs 20 power crystals. She already has 8. How many more does she need?"
+        },
+        {
+          "id": "h012", "type": "sort_desc", "difficulty": 2,
+          "question": "Sort hero power levels from strongest to weakest!",
+          "values": [7, 18, 3, 13],
+          "answer": [18, 13, 7, 3],
+          "flavour": "The strongest hero leads! Sort from biggest to smallest."
+        },
+        {
+          "id": "h013", "type": "fill_in", "difficulty": 3,
+          "equation": "3 × 8 = ?",
+          "answer": 24,
+          "flavour": "3 teams of 8 heroes each — how many heroes in total?"
+        },
+        {
+          "id": "h014", "type": "multiple_choice", "difficulty": 3,
+          "question": "What is 45 - 17?",
+          "options": [26, 27, 28, 29],
+          "answer": 28,
+          "flavour": "The hero started with 45 shield points. The villain hit for 17. What's left?"
+        },
+        {
+          "id": "h015", "type": "fill_in", "difficulty": 3,
+          "equation": "6 × ? = 42",
+          "answer": 7,
+          "flavour": "6 heroes each threw the same number of punches — 42 total. How many each?"
+        },
+        {
+          "id": "h016", "type": "multiple_choice", "difficulty": 3,
+          "question": "A hero flies 12 km north, then 15 km east, then 8 km south. How far north of where she started is she?",
+          "options": [2, 3, 4, 5],
+          "answer": 4,
+          "flavour": "Use your hero brain — track her journey on the map!"
+        },
+        {
+          "id": "h017", "type": "true_false", "difficulty": 3,
+          "statement": "7 × 8 = 56",
+          "answer": true,
+          "flavour": "7 hero squads of 8 — does that make 56 heroes?"
+        }
+      ]
+    },
+
+    {
+      "id": "vehicles",
+      "name": "Vehicle Vault",
+      "emoji": "🚗",
+      "colour": "#FF5722",
+      "description": "Race, fly, and sail your way to collecting awesome vehicles!",
+      "unlockOrder": 3,
+      "rewards": [
+        { "id": "veh-r01", "type": "vehicle", "name": "Racing Car", "emoji": "🏎️", "fact": "Formula 1 cars can go from 0 to 100mph in under 2 seconds!", "unlockedAtStars": 3 },
+        { "id": "veh-r02", "type": "vehicle", "name": "Rocket Ship", "emoji": "🚀", "fact": "Rockets travel at 17,500 miles per hour to reach space!", "unlockedAtStars": 6 },
+        { "id": "veh-r03", "type": "vehicle", "name": "Submarine", "emoji": "🚢", "fact": "Submarines can dive 800 metres deep!", "unlockedAtStars": 9 },
+        { "id": "veh-r04", "type": "vehicle", "name": "Fighter Jet", "emoji": "✈️", "fact": "Fighter jets can fly faster than the speed of sound!", "unlockedAtStars": 12 },
+        { "id": "veh-r05", "type": "badge", "name": "Vehicle Master", "emoji": "🏆", "fact": "You've unlocked the whole Vehicle Vault!", "unlockedAtStars": 15 }
+      ],
+      "challenges": [
+        {
+          "id": "v001", "type": "multiple_choice", "difficulty": 1,
+          "question": "A race car has 4 wheels. How many wheels do 2 race cars have?",
+          "options": [6, 7, 8, 9],
+          "answer": 8,
+          "flavour": "Vroom! Count up the wheels on the track!"
+        },
+        {
+          "id": "v002", "type": "tap_biggest", "difficulty": 1,
+          "question": "Which rocket goes the highest? Tap the biggest number!",
+          "values": [5, 9, 3],
+          "answer": 9,
+          "flavour": "The highest rocket wins the space race!"
+        },
+        {
+          "id": "v003", "type": "fill_in", "difficulty": 1,
+          "equation": "2 + ? = 9",
+          "answer": 7,
+          "flavour": "The submarine has 2 crew. More jump in and now there are 9. How many jumped in?"
+        },
+        {
+          "id": "v004", "type": "true_false", "difficulty": 1,
+          "statement": "7 is less than 4",
+          "answer": false,
+          "flavour": "Car number 7 vs car number 4 — is 7 less than 4?"
+        },
+        {
+          "id": "v005", "type": "sort_asc", "difficulty": 1,
+          "question": "Sort the cars by race position — first place is the smallest number!",
+          "values": [4, 1, 7, 2],
+          "answer": [1, 2, 4, 7],
+          "flavour": "Line up the cars from first to last!"
+        },
+        {
+          "id": "v006", "type": "multiple_choice", "difficulty": 1,
+          "question": "What is 3 + 5?",
+          "options": [6, 7, 8, 9],
+          "answer": 8,
+          "flavour": "3 red cars and 5 blue cars — how many cars on the track?"
+        },
+        {
+          "id": "v007", "type": "fill_in", "difficulty": 2,
+          "equation": "9 + 8 = ?",
+          "answer": 17,
+          "flavour": "A train has 9 carriages. They add 8 more. How long is it now?"
+        },
+        {
+          "id": "v008", "type": "multiple_choice", "difficulty": 2,
+          "question": "A rocket travelled 25 km, then 13 km more. How far in total?",
+          "options": [36, 37, 38, 39],
+          "answer": 38,
+          "flavour": "Houston, track the rocket's total distance!"
+        },
+        {
+          "id": "v009", "type": "tap_smallest", "difficulty": 2,
+          "question": "The slowest vehicle has the smallest speed. Tap it!",
+          "values": [18, 6, 22, 14],
+          "answer": 6,
+          "flavour": "Find the slowpoke — tap the smallest number!"
+        },
+        {
+          "id": "v010", "type": "true_false", "difficulty": 2,
+          "statement": "11 + 9 = 21",
+          "answer": false,
+          "flavour": "The driver counted 11 laps then 9 more — did he get 21 right?"
+        },
+        {
+          "id": "v011", "type": "fill_in", "difficulty": 2,
+          "equation": "20 - ? = 13",
+          "answer": 7,
+          "flavour": "The jet had 20 fuel pods. It used some and now has 13. How many did it use?"
+        },
+        {
+          "id": "v012", "type": "sort_desc", "difficulty": 2,
+          "question": "Sort vehicles by speed — fastest first!",
+          "values": [9, 22, 5, 16],
+          "answer": [22, 16, 9, 5],
+          "flavour": "Fastest vehicle leads — sort from biggest to smallest!"
+        },
+        {
+          "id": "v013", "type": "fill_in", "difficulty": 3,
+          "equation": "4 × 6 = ?",
+          "answer": 24,
+          "flavour": "4 trucks each carrying 6 crates — how many crates altogether?"
+        },
+        {
+          "id": "v014", "type": "multiple_choice", "difficulty": 3,
+          "question": "What is 52 - 28?",
+          "options": [22, 23, 24, 25],
+          "answer": 24,
+          "flavour": "The car started with 52 fuel units and used 28. How much is left?"
+        },
+        {
+          "id": "v015", "type": "fill_in", "difficulty": 3,
+          "equation": "? × 5 = 35",
+          "answer": 7,
+          "flavour": "Each rocket stage uses 5 fuel cells — 35 cells total. How many stages?"
+        },
+        {
+          "id": "v016", "type": "multiple_choice", "difficulty": 3,
+          "question": "A train makes 3 trips a day. Each trip carries 12 passengers. How many passengers in 2 days?",
+          "options": [60, 66, 72, 78],
+          "answer": 72,
+          "flavour": "The busy station never stops — how many passengers this week?"
+        },
+        {
+          "id": "v017", "type": "true_false", "difficulty": 3,
+          "statement": "9 × 6 = 54",
+          "answer": true,
+          "flavour": "9 garages with 6 cars each — is that really 54 cars?"
+        }
+      ]
+    }
+  ]
+}
