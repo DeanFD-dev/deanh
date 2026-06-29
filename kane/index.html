@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Kane's Number World</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #0D1B2A;
+      --surface:   #162535;
+      --surface2:  #1E3347;
+      --gold:      #FFD93D;
+      --gold-dark: #E5B800;
+      --text:      #F0F4F8;
+      --muted:     #8BAABF;
+      --correct:   #4CAF50;
+      --wrong:     #F44336;
+      --dino:      #4CAF50;
+      --hero:      #2196F3;
+      --vehicles:  #FF5722;
+      --radius:    20px;
+      --radius-sm: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      height: 100%; width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ── SCREENS ─────────────────────────────────── */
+    .screen {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .screen.active { opacity: 1; pointer-events: all; }
+
+    /* ── HOME ────────────────────────────────────── */
+    #screen-home {
+      gap: 28px;
+      background: radial-gradient(ellipse at 50% 0%, #1a3550 0%, var(--bg) 70%);
+    }
+
+    .home-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2.4rem, 7vw, 3.4rem);
+      color: var(--gold);
+      text-align: center;
+      line-height: 1.1;
+      text-shadow: 0 0 40px rgba(255,217,61,0.3);
+    }
+
+    .home-subtitle {
+      font-size: 1.1rem;
+      color: var(--muted);
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .streak-banner {
+      background: var(--surface);
+      border: 2px solid var(--gold-dark);
+      border-radius: var(--radius);
+      padding: 14px 28px;
+      text-align: center;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .streak-banner .streak-num {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2rem; color: var(--gold);
+    }
+    .streak-banner .streak-label {
+      font-size: 0.9rem; color: var(--muted); font-weight: 700;
+    }
+
+    .worlds-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      width: 100%; max-width: 560px;
+    }
+
+    .world-btn {
+      background: var(--surface);
+      border: 3px solid transparent;
+      border-radius: var(--radius);
+      padding: 20px 12px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 10px;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .world-btn:active { transform: scale(0.95); }
+    .world-btn[data-world="dino"] { border-color: var(--dino); }
+    .world-btn[data-world="hero"] { border-color: var(--hero); }
+    .world-btn[data-world="vehicles"] { border-color: var(--vehicles); }
+    .world-btn:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.4); transform: translateY(-3px); }
+
+    .world-emoji { font-size: 2.8rem; }
+    .world-name {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem; text-align: center;
+    }
+    .world-stars {
+      font-size: 0.8rem; color: var(--gold);
+      letter-spacing: 1px;
+    }
+    .world-lock {
+      position: absolute; inset: 0;
+      background: rgba(13,27,42,0.75);
+      border-radius: calc(var(--radius) - 2px);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+    }
+
+    /* ── CHALLENGE ───────────────────────────────── */
+    #screen-challenge {
+      gap: 20px;
+      justify-content: flex-start;
+      padding-top: 20px;
+    }
+
+    .challenge-header {
+      width: 100%; max-width: 600px;
+      display: flex; align-items: center; gap: 14px;
+    }
+
+    .progress-dots {
+      display: flex; gap: 8px; flex: 1;
+    }
+    .dot {
+      flex: 1; height: 8px; border-radius: 4px;
+      background: var(--surface2);
+      transition: background 0.3s;
+    }
+    .dot.done { background: var(--gold); }
+    .dot.current { background: var(--muted); }
+
+    .world-badge {
+      font-size: 1.6rem;
+      background: var(--surface);
+      padding: 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    .question-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 28px 24px 22px;
+      width: 100%; max-width: 600px;
+      text-align: center;
+      border: 2px solid var(--surface2);
+    }
+
+    .flavour-text {
+      font-size: 0.95rem; color: var(--muted);
+      font-weight: 600; margin-bottom: 14px;
+      min-height: 1.2em;
+    }
+
+    .question-text {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(1.5rem, 4.5vw, 2rem);
+      line-height: 1.3;
+      color: var(--text);
+    }
+
+    .count-display {
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      letter-spacing: 4px;
+      margin: 8px 0;
+    }
+
+    .answers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      width: 100%; max-width: 600px;
+    }
+    .answers-grid.wide {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .answer-btn {
+      background: var(--surface);
+      border: 3px solid var(--surface2);
+      border-radius: var(--radius);
+      padding: 22px 12px;
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 0.12s, border-color 0.15s, background 0.15s;
+      min-height: 80px;
+    }
+    .answer-btn:active { transform: scale(0.94); }
+    .answer-btn:hover:not(.disabled) {
+      border-color: var(--gold);
+      background: var(--surface2);
+    }
+    .answer-btn.correct {
+      background: rgba(76,175,80,0.25);
+      border-color: var(--correct);
+      color: var(--correct);
+    }
+    .answer-btn.wrong {
+      background: rgba(244,67,54,0.2);
+      border-color: var(--wrong);
+      color: var(--wrong);
+    }
+    .answer-btn.disabled { cursor: default; }
+
+    /* fill-in input */
+    .fill-in-wrap {
+      width: 100%; max-width: 600px;
+      display: flex; gap: 14px; align-items: center;
+    }
+
+    .fill-in-display {
+      flex: 1;
+      background: var(--surface);
+      border: 3px solid var(--surface2);
+      border-radius: var(--radius);
+      padding: 22px;
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      text-align: center;
+    }
+    .fill-in-display .blank {
+      color: var(--gold);
+      text-decoration: underline;
+      min-width: 40px; display: inline-block;
+    }
+
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: 100%; max-width: 600px;
+    }
+
+    .numpad-btn {
+      background: var(--surface);
+      border: 2px solid var(--surface2);
+      border-radius: var(--radius-sm);
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.6rem;
+      color: var(--text);
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.1s;
+    }
+    .numpad-btn:active { transform: scale(0.92); background: var(--surface2); }
+    .numpad-btn.del { color: var(--wrong); }
+    .numpad-btn.go {
+      background: var(--gold);
+      color: var(--bg);
+      border-color: var(--gold);
+      font-size: 1.1rem;
+    }
+    .numpad-btn.go:active { background: var(--gold-dark); }
+
+    /* true/false */
+    .tf-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      width: 100%; max-width: 600px;
+    }
+    .tf-btn {
+      background: var(--surface);
+      border: 3px solid var(--surface2);
+      border-radius: var(--radius);
+      padding: 28px 12px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: transform 0.12s, border-color 0.15s;
+    }
+    .tf-btn:active { transform: scale(0.95); }
+    .tf-btn.true-btn { color: var(--correct); }
+    .tf-btn.false-btn { color: var(--wrong); }
+    .tf-btn.correct { background: rgba(76,175,80,0.25); border-color: var(--correct); }
+    .tf-btn.wrong   { background: rgba(244,67,54,0.2);  border-color: var(--wrong); }
+
+    /* sort */
+    .sort-tray {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      justify-content: center;
+      width: 100%; max-width: 600px;
+    }
+    .sort-chip {
+      background: var(--surface);
+      border: 3px solid var(--surface2);
+      border-radius: var(--radius-sm);
+      padding: 16px 24px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.6rem;
+      cursor: pointer;
+      transition: transform 0.12s, border-color 0.2s, background 0.2s;
+    }
+    .sort-chip:active { transform: scale(0.93); }
+    .sort-chip.selected { border-color: var(--gold); background: var(--surface2); }
+    .sort-chip.placed { opacity: 0.3; pointer-events: none; }
+
+    .sort-slots {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      justify-content: center;
+      width: 100%; max-width: 600px;
+    }
+    .sort-slot {
+      background: var(--surface2);
+      border: 3px dashed var(--muted);
+      border-radius: var(--radius-sm);
+      padding: 16px 24px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.6rem;
+      min-width: 70px; text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .sort-slot.filled { border-style: solid; border-color: var(--gold); }
+    .sort-slot:hover { border-color: var(--gold); }
+    .sort-slot.correct-slot { border-color: var(--correct); color: var(--correct); }
+    .sort-slot.wrong-slot   { border-color: var(--wrong);   color: var(--wrong); }
+
+    .sort-label {
+      font-size: 0.85rem; color: var(--muted); font-weight: 700;
+      text-align: center; letter-spacing: 0.5px;
+    }
+
+    .check-btn {
+      background: var(--gold);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      padding: 18px 48px;
+      cursor: pointer;
+      transition: transform 0.12s, background 0.12s;
+      width: 100%; max-width: 600px;
+    }
+    .check-btn:active { transform: scale(0.97); background: var(--gold-dark); }
+    .check-btn:disabled { opacity: 0.4; cursor: default; }
+
+    .feedback-bar {
+      width: 100%; max-width: 600px;
+      border-radius: var(--radius-sm);
+      padding: 14px 20px;
+      text-align: center;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .feedback-bar.show { opacity: 1; }
+    .feedback-bar.correct { background: rgba(76,175,80,0.2); color: var(--correct); }
+    .feedback-bar.wrong   { background: rgba(244,67,54,0.15); color: var(--wrong); }
+
+    /* ── RESULTS ──────────────────────────────────── */
+    #screen-results {
+      gap: 24px;
+      background: radial-gradient(ellipse at 50% 30%, #1e3a50 0%, var(--bg) 70%);
+    }
+
+    .results-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2rem, 6vw, 2.8rem);
+      color: var(--gold);
+      text-align: center;
+    }
+
+    .stars-row {
+      display: flex; gap: 12px; justify-content: center;
+    }
+    .star {
+      font-size: clamp(2.5rem, 9vw, 4rem);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform: scale(0);
+    }
+    .star.earned { transform: scale(1); }
+
+    .score-line {
+      font-size: 1.1rem; color: var(--muted);
+      font-weight: 700; text-align: center;
+    }
+
+    .reward-card {
+      background: var(--surface);
+      border: 3px solid var(--gold-dark);
+      border-radius: var(--radius);
+      padding: 24px 32px;
+      text-align: center;
+      display: none; flex-direction: column; align-items: center; gap: 10px;
+      animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .reward-card.show { display: flex; }
+    .reward-emoji { font-size: 3.5rem; }
+    .reward-name {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.4rem; color: var(--gold);
+    }
+    .reward-fact {
+      font-size: 0.9rem; color: var(--muted);
+      font-weight: 600; max-width: 280px;
+      line-height: 1.5;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      padding: 18px 40px;
+      cursor: pointer;
+      width: 100%; max-width: 320px;
+      transition: transform 0.12s, background 0.12s;
+    }
+    .btn-primary:active { transform: scale(0.96); background: var(--gold-dark); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--muted);
+      border: 2px solid var(--surface2);
+      border-radius: var(--radius);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 14px 32px;
+      cursor: pointer;
+      width: 100%; max-width: 320px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--muted); color: var(--text); }
+
+    /* ── EMOJI BURST ─────────────────────────────── */
+    #burst-layer {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      overflow: hidden;
+    }
+    .burst-emoji {
+      position: absolute;
+      font-size: 2.4rem;
+      animation: burstFall 1.4s ease-in forwards;
+      pointer-events: none;
+    }
+    @keyframes burstFall {
+      0%   { transform: translateY(-60px) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg) scale(0.5); opacity: 0; }
+    }
+
+    /* ── ANIMATIONS ──────────────────────────────── */
+    @keyframes popIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-8px); }
+      75%      { transform: translateX(8px); }
+    }
+    .shake { animation: shake 0.3s ease; }
+
+    @keyframes pulseGold {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,217,61,0); }
+      50%      { box-shadow: 0 0 0 12px rgba(255,217,61,0.2); }
+    }
+
+    /* ── LOADING ──────────────────────────────────── */
+    #screen-loading {
+      gap: 20px;
+    }
+    .loading-emoji {
+      font-size: 4rem;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    .loading-text {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem; color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<!-- BURST LAYER -->
+<div id="burst-layer"></div>
+
+<!-- LOADING -->
+<div class="screen active" id="screen-loading">
+  <div class="loading-emoji">🔢</div>
+  <div class="loading-text">Loading Number World…</div>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="screen-home">
+  <div class="home-title">Kane's<br>Number World</div>
+  <div class="home-subtitle">Pick a world and play!</div>
+
+  <div class="streak-banner" id="streak-banner">
+    <div>
+      <div class="streak-num" id="streak-num">0</div>
+      <div class="streak-label">DAY STREAK 🔥</div>
+    </div>
+    <div style="flex:1;text-align:right">
+      <div style="font-size:0.8rem;color:var(--muted);font-weight:700">TOTAL STARS</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--gold)" id="total-stars-home">0 ⭐</div>
+    </div>
+  </div>
+
+  <div class="worlds-grid" id="worlds-grid"></div>
+</div>
+
+<!-- CHALLENGE -->
+<div class="screen" id="screen-challenge">
+  <div class="challenge-header">
+    <div class="world-badge" id="ch-world-badge">🦕</div>
+    <div class="progress-dots" id="progress-dots"></div>
+  </div>
+
+  <div class="question-card" id="question-card">
+    <div class="flavour-text" id="flavour-text"></div>
+    <div class="question-text" id="question-text"></div>
+    <div class="count-display" id="count-display"></div>
+  </div>
+
+  <!-- multiple choice / tap -->
+  <div class="answers-grid" id="answers-grid"></div>
+
+  <!-- true/false -->
+  <div class="tf-grid" id="tf-grid" style="display:none">
+    <button class="tf-btn true-btn" id="btn-true" onclick="submitTF(true)">✅ TRUE</button>
+    <button class="tf-btn false-btn" id="btn-false" onclick="submitTF(false)">❌ FALSE</button>
+  </div>
+
+  <!-- fill-in -->
+  <div class="fill-in-wrap" id="fill-in-wrap" style="display:none">
+    <div class="fill-in-display" id="fill-in-display">_ + _ = _</div>
+  </div>
+  <div class="numpad" id="numpad" style="display:none">
+    <button class="numpad-btn" onclick="numpadInput('1')">1</button>
+    <button class="numpad-btn" onclick="numpadInput('2')">2</button>
+    <button class="numpad-btn" onclick="numpadInput('3')">3</button>
+    <button class="numpad-btn" onclick="numpadInput('4')">4</button>
+    <button class="numpad-btn" onclick="numpadInput('5')">5</button>
+    <button class="numpad-btn" onclick="numpadInput('6')">6</button>
+    <button class="numpad-btn" onclick="numpadInput('7')">7</button>
+    <button class="numpad-btn" onclick="numpadInput('8')">8</button>
+    <button class="numpad-btn" onclick="numpadInput('9')">9</button>
+    <button class="numpad-btn del" onclick="numpadInput('del')">⌫</button>
+    <button class="numpad-btn" onclick="numpadInput('0')">0</button>
+    <button class="numpad-btn go" onclick="submitFillIn()">GO ✓</button>
+  </div>
+
+  <!-- sort -->
+  <div class="sort-label" id="sort-label-slots" style="display:none">Your order ↓</div>
+  <div class="sort-slots" id="sort-slots" style="display:none"></div>
+  <div class="sort-label" id="sort-label-chips" style="display:none">Tap a number to place it ↑</div>
+  <div class="sort-tray" id="sort-tray" style="display:none"></div>
+  <button class="check-btn" id="sort-check-btn" style="display:none" onclick="submitSort()" disabled>Check My Order ✓</button>
+
+  <div class="feedback-bar" id="feedback-bar"></div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="screen-results">
+  <div class="results-title" id="results-title">Well done!</div>
+  <div class="stars-row" id="stars-row">
+    <div class="star" id="star-1">⭐</div>
+    <div class="star" id="star-2">⭐</div>
+    <div class="star" id="star-3">⭐</div>
+  </div>
+  <div class="score-line" id="score-line">You got 5 out of 5!</div>
+  <div class="reward-card" id="reward-card">
+    <div class="reward-emoji" id="reward-emoji">🦖</div>
+    <div class="reward-name" id="reward-name">You unlocked T-Rex!</div>
+    <div class="reward-fact" id="reward-fact"></div>
+  </div>
+  <button class="btn-primary" onclick="playAgain()">Play Again 🎮</button>
+  <button class="btn-secondary" onclick="goHome()">Choose World</button>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// DATA LOADER
+// ──────────────────────────────────────────────
+let DATA = null;
+let state = {
+  worldId: null,
+  session: [],        // 5 challenge objects
+  current: 0,
+  score: 0,
+  fillVal: '',
+  sortPlaced: [],
+  sortSelected: null,
+  locked: false,
+};
+
+async function loadData() {
+  try {
+    const res = await fetch('kane-numbers-data.json');
+    DATA = await res.json();
+  } catch(e) {
+    // Fallback: tiny inline dataset so app still works if JSON not co-located
+    DATA = {
+      settings: { questionsPerSession: 5, starThresholds: { three: 5, two: 3, one: 1 }, streakMilestones: [3,7,14,30] },
+      worlds: [
+        {
+          id:'dino', name:'Dino Domain', emoji:'🦕', colour:'#4CAF50',
+          description:'Journey through the prehistoric jungle!', unlockOrder:1,
+          rewards:[
+            {id:'r1',type:'card',name:'T-Rex',emoji:'🦖',fact:'T-Rex had teeth as big as bananas!',unlockedAtStars:3}
+          ],
+          challenges:[
+            {id:'d1',type:'multiple_choice',difficulty:1,question:'Which is bigger?',options:[3,9,5,2],answer:9,flavour:'Pick the biggest number!'},
+            {id:'d2',type:'fill_in',difficulty:1,equation:'2 + ? = 5',answer:3,flavour:'Help the dino count!'},
+            {id:'d3',type:'true_false',difficulty:1,statement:'8 is bigger than 5',answer:true,flavour:'Is this true?'},
+            {id:'d4',type:'tap_biggest',difficulty:1,question:'Tap the biggest!',values:[4,7,2],answer:7,flavour:'Find the biggest!'},
+            {id:'d5',type:'sort_asc',difficulty:1,question:'Sort smallest to biggest!',values:[5,1,8,3],answer:[1,3,5,8],flavour:'Line them up!'},
+          ]
+        }
+      ]
+    };
+  }
+  init();
+}
+
+// ──────────────────────────────────────────────
+// STORAGE
+// ──────────────────────────────────────────────
+function saveProgress(key, val) { try { localStorage.setItem('kane_' + key, JSON.stringify(val)); } catch(e){} }
+function loadProgress(key, def) { try { const v = localStorage.getItem('kane_' + key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
+
+function getStarsForWorld(worldId) { return loadProgress('stars_' + worldId, 0); }
+function addStarsForWorld(worldId, n) {
+  const current = getStarsForWorld(worldId);
+  saveProgress('stars_' + worldId, current + n);
+  return current + n;
+}
+function getTotalStars() {
+  if(!DATA) return 0;
+  return DATA.worlds.reduce((t, w) => t + getStarsForWorld(w.id), 0);
+}
+
+function getStreak() {
+  const data = loadProgress('streak', { count: 0, lastDate: null });
+  const today = new Date().toDateString();
+  if (data.lastDate === today) return data.count;
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (data.lastDate === yesterday) return data.count;
+  return 0;
+}
+function bumpStreak() {
+  const today = new Date().toDateString();
+  const data = loadProgress('streak', { count: 0, lastDate: null });
+  if (data.lastDate === today) return data.count; // already played today
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  const newCount = (data.lastDate === yesterday) ? data.count + 1 : 1;
+  saveProgress('streak', { count: newCount, lastDate: today });
+  return newCount;
+}
+
+function getUnlockedWorlds() {
+  if(!DATA) return [];
+  return DATA.worlds.map(w => w.id);  // all unlocked for now; can gate by unlockOrder + starcount
+}
+
+// ──────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────
+function init() {
+  renderHome();
+  showScreen('home');
+}
+
+// ──────────────────────────────────────────────
+// SCREENS
+// ──────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+// ──────────────────────────────────────────────
+// HOME
+// ──────────────────────────────────────────────
+function renderHome() {
+  document.getElementById('streak-num').textContent = getStreak();
+  document.getElementById('total-stars-home').textContent = getTotalStars() + ' ⭐';
+
+  const grid = document.getElementById('worlds-grid');
+  grid.innerHTML = '';
+  DATA.worlds.forEach(world => {
+    const stars = getStarsForWorld(world.id);
+    const btn = document.createElement('div');
+    btn.className = 'world-btn';
+    btn.dataset.world = world.id;
+    btn.innerHTML = `
+      <div class="world-emoji">${world.emoji}</div>
+      <div class="world-name" style="color:${world.colour}">${world.name}</div>
+      <div class="world-stars">${'⭐'.repeat(Math.min(stars, 5))}</div>
+    `;
+    btn.onclick = () => startWorld(world.id);
+    grid.appendChild(btn);
+  });
+}
+
+// ──────────────────────────────────────────────
+// WORLD START
+// ──────────────────────────────────────────────
+function startWorld(worldId) {
+  state.worldId = worldId;
+  state.current = 0;
+  state.score = 0;
+  state.locked = false;
+
+  const world = DATA.worlds.find(w => w.id === worldId);
+
+  // Pick 5 challenges: at least 1 easy, 1 medium if available
+  const easy = world.challenges.filter(c => c.difficulty === 1);
+  const med  = world.challenges.filter(c => c.difficulty === 2);
+  const hard = world.challenges.filter(c => c.difficulty === 3);
+
+  let pool = [];
+  if (easy.length) pool.push(easy[Math.floor(Math.random()*easy.length)]);
+  if (easy.length > 1) pool.push(easy.filter(c => !pool.includes(c))[Math.floor(Math.random()*(easy.length-1))]);
+  if (med.length)  pool.push(med[Math.floor(Math.random()*med.length)]);
+  if (med.length > 1) pool.push(med.filter(c => !pool.includes(c))[Math.floor(Math.random()*(med.length-1))]);
+  if (hard.length) pool.push(hard[Math.floor(Math.random()*hard.length)]);
+
+  // shuffle and take 5
+  pool = pool.sort(() => Math.random()-0.5).slice(0, DATA.settings.questionsPerSession);
+
+  // fill if under 5
+  if(pool.length < DATA.settings.questionsPerSession) {
+    const all = world.challenges.filter(c => !pool.includes(c));
+    const extra = all.sort(()=>Math.random()-0.5).slice(0, DATA.settings.questionsPerSession - pool.length);
+    pool = [...pool, ...extra];
+  }
+
+  state.session = pool;
+
+  // header badge
+  document.getElementById('ch-world-badge').textContent = world.emoji;
+
+  // progress dots
+  const dots = document.getElementById('progress-dots');
+  dots.innerHTML = '';
+  for(let i=0;i<DATA.settings.questionsPerSession;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===0?' current':'');
+    d.id = 'dot-'+i;
+    dots.appendChild(d);
+  }
+
+  showScreen('challenge');
+  renderChallenge();
+}
+
+// ──────────────────────────────────────────────
+// CHALLENGE RENDER
+// ──────────────────────────────────────────────
+function renderChallenge() {
+  const c = state.session[state.current];
+  state.locked = false;
+  state.fillVal = '';
+  state.sortPlaced = Array(c.values?.length || 0).fill(null);
+  state.sortSelected = null;
+
+  // update dots
+  for(let i=0;i<DATA.settings.questionsPerSession;i++){
+    const d = document.getElementById('dot-'+i);
+    d.className = 'dot' + (i < state.current ? ' done' : i === state.current ? ' current' : '');
+  }
+
+  // clear feedback
+  const fb = document.getElementById('feedback-bar');
+  fb.className = 'feedback-bar';
+  fb.textContent = '';
+
+  // question card
+  document.getElementById('flavour-text').textContent = c.flavour || '';
+  document.getElementById('question-text').textContent = '';
+  document.getElementById('count-display').textContent = '';
+
+  // hide all input types
+  document.getElementById('answers-grid').style.display = 'none';
+  document.getElementById('tf-grid').style.display = 'none';
+  document.getElementById('fill-in-wrap').style.display = 'none';
+  document.getElementById('numpad').style.display = 'none';
+  document.getElementById('sort-tray').style.display = 'none';
+  document.getElementById('sort-slots').style.display = 'none';
+  document.getElementById('sort-check-btn').style.display = 'none';
+  document.getElementById('sort-label-chips').style.display = 'none';
+  document.getElementById('sort-label-slots').style.display = 'none';
+
+  if (c.type === 'multiple_choice') renderMC(c);
+  else if (c.type === 'tap_biggest' || c.type === 'tap_smallest') renderTap(c);
+  else if (c.type === 'true_false') renderTF(c);
+  else if (c.type === 'fill_in') renderFillIn(c);
+  else if (c.type === 'sort_asc' || c.type === 'sort_desc') renderSort(c);
+  else if (c.type === 'count_objects') renderCount(c);
+  else renderMC(c); // fallback
+}
+
+function renderMC(c) {
+  document.getElementById('question-text').textContent = c.question;
+  const grid = document.getElementById('answers-grid');
+  grid.innerHTML = '';
+  grid.style.display = 'grid';
+  const opts = (c.options || []).sort(() => Math.random()-0.5);
+  opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.textContent = opt;
+    btn.onclick = () => submitMC(opt, c.answer, btn, grid);
+    grid.appendChild(btn);
+  });
+}
+
+function renderTap(c) {
+  document.getElementById('question-text').textContent = c.question;
+  const grid = document.getElementById('answers-grid');
+  grid.innerHTML = '';
+  grid.style.display = 'grid';
+  grid.className = 'answers-grid wide';
+  const vals = [...c.values].sort(() => Math.random()-0.5);
+  vals.forEach(v => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.textContent = v;
+    btn.onclick = () => submitMC(v, c.answer, btn, grid);
+    grid.appendChild(btn);
+  });
+}
+
+function renderTF(c) {
+  document.getElementById('question-text').textContent = c.statement;
+  document.getElementById('tf-grid').style.display = 'grid';
+  document.getElementById('btn-true').className = 'tf-btn true-btn';
+  document.getElementById('btn-false').className = 'tf-btn false-btn';
+}
+
+function renderFillIn(c) {
+  document.getElementById('question-text').textContent = '';
+  const display = document.getElementById('fill-in-display');
+  display.innerHTML = c.equation.replace('?', '<span class="blank" id="blank-val">?</span>');
+  document.getElementById('fill-in-wrap').style.display = 'flex';
+  document.getElementById('numpad').style.display = 'grid';
+}
+
+function renderSort(c) {
+  document.getElementById('question-text').textContent = c.question;
+
+  const dir = c.type === 'sort_asc' ? 'Smallest → Biggest' : 'Biggest → Smallest';
+  document.getElementById('sort-label-slots').textContent = dir + ' ↓';
+  document.getElementById('sort-label-slots').style.display = 'block';
+
+  // slots
+  const slots = document.getElementById('sort-slots');
+  slots.innerHTML = '';
+  slots.style.display = 'flex';
+  c.values.forEach((_, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'sort-slot';
+    slot.id = 'slot-' + i;
+    slot.textContent = '_';
+    slot.onclick = () => onSlotClick(i);
+    slots.appendChild(slot);
+  });
+
+  document.getElementById('sort-label-chips').style.display = 'block';
+
+  // chips
+  const tray = document.getElementById('sort-tray');
+  tray.innerHTML = '';
+  tray.style.display = 'flex';
+  const shuffled = [...c.values].sort(() => Math.random()-0.5);
+  shuffled.forEach((v, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'sort-chip';
+    chip.id = 'chip-' + i;
+    chip.dataset.val = v;
+    chip.textContent = v;
+    chip.onclick = () => onChipClick(chip, i);
+    tray.appendChild(chip);
+  });
+
+  const checkBtn = document.getElementById('sort-check-btn');
+  checkBtn.style.display = 'block';
+  checkBtn.disabled = true;
+}
+
+function renderCount(c) {
+  document.getElementById('question-text').textContent = c.question || 'How many are there?';
+  document.getElementById('count-display').textContent = (c.emoji || '⭐').repeat(c.count);
+  renderMC(c);
+}
+
+// ──────────────────────────────────────────────
+// SUBMISSION HANDLERS
+// ──────────────────────────────────────────────
+function submitMC(chosen, correct, btn, grid) {
+  if (state.locked) return;
+  state.locked = true;
+  const isRight = String(chosen) === String(correct);
+
+  grid.querySelectorAll('.answer-btn').forEach(b => {
+    b.classList.add('disabled');
+    if (String(b.textContent) === String(correct)) b.classList.add('correct');
+  });
+  if (!isRight) btn.classList.add('wrong');
+
+  handleResult(isRight);
+}
+
+function submitTF(chosen) {
+  if (state.locked) return;
+  state.locked = true;
+  const c = state.session[state.current];
+  const isRight = chosen === c.answer;
+
+  const trueBtn = document.getElementById('btn-true');
+  const falseBtn = document.getElementById('btn-false');
+  trueBtn.classList.add('disabled'); falseBtn.classList.add('disabled');
+
+  if (c.answer === true) trueBtn.classList.add('correct');
+  else falseBtn.classList.add('correct');
+
+  if (!isRight) {
+    if (chosen === true) trueBtn.classList.add('wrong');
+    else falseBtn.classList.add('wrong');
+  }
+
+  handleResult(isRight);
+}
+
+function numpadInput(key) {
+  if (state.locked) return;
+  if (key === 'del') state.fillVal = state.fillVal.slice(0,-1);
+  else if (state.fillVal.length < 4) state.fillVal += key;
+  const blank = document.getElementById('blank-val');
+  if (blank) blank.textContent = state.fillVal || '?';
+}
+
+function submitFillIn() {
+  if (state.locked || !state.fillVal) return;
+  state.locked = true;
+  const c = state.session[state.current];
+  const isRight = parseInt(state.fillVal) === c.answer;
+  const display = document.getElementById('fill-in-display');
+  display.style.color = isRight ? 'var(--correct)' : 'var(--wrong)';
+  if (!isRight) {
+    display.innerHTML = c.equation.replace('?', `<span style="color:var(--wrong)">${state.fillVal}</span>`) +
+      ` → <span style="color:var(--correct)">${c.answer}</span>`;
+    display.classList.add('shake');
+    setTimeout(()=>display.classList.remove('shake'), 400);
+  }
+  handleResult(isRight);
+}
+
+function onChipClick(chip, idx) {
+  if (state.locked) return;
+  const c = state.session[state.current];
+  // deselect if already selected
+  if (state.sortSelected === idx) {
+    chip.classList.remove('selected');
+    state.sortSelected = null;
+    return;
+  }
+  // deselect previous
+  document.querySelectorAll('.sort-chip.selected').forEach(x => x.classList.remove('selected'));
+
+  // if there's a free slot, auto-place into first empty slot
+  const firstEmpty = state.sortPlaced.indexOf(null);
+  if (firstEmpty !== -1) {
+    const val = parseInt(chip.dataset.val);
+    state.sortPlaced[firstEmpty] = val;
+    chip.classList.add('placed');
+    const slot = document.getElementById('slot-' + firstEmpty);
+    slot.textContent = val;
+    slot.classList.add('filled');
+    state.sortSelected = null;
+    // check if all filled
+    if (!state.sortPlaced.includes(null)) {
+      document.getElementById('sort-check-btn').disabled = false;
+    }
+  } else {
+    chip.classList.add('selected');
+    state.sortSelected = idx;
+  }
+}
+
+function onSlotClick(slotIdx) {
+  if (state.locked) return;
+  if (state.sortPlaced[slotIdx] === null) return;
+  // remove from slot, return chip
+  const val = state.sortPlaced[slotIdx];
+  state.sortPlaced[slotIdx] = null;
+  const slot = document.getElementById('slot-' + slotIdx);
+  slot.textContent = '_';
+  slot.classList.remove('filled');
+  // re-enable matching chip
+  document.querySelectorAll('.sort-chip').forEach(chip => {
+    if (parseInt(chip.dataset.val) === val && chip.classList.contains('placed')) {
+      chip.classList.remove('placed');
+    }
+  });
+  document.getElementById('sort-check-btn').disabled = true;
+}
+
+function submitSort() {
+  if (state.locked) return;
+  state.locked = true;
+  const c = state.session[state.current];
+  const isRight = JSON.stringify(state.sortPlaced) === JSON.stringify(c.answer);
+
+  state.sortPlaced.forEach((v, i) => {
+    const slot = document.getElementById('slot-' + i);
+    const correct = v === c.answer[i];
+    slot.classList.add(correct ? 'correct-slot' : 'wrong-slot');
+  });
+
+  if (!isRight) {
+    // show correct order
+    setTimeout(() => {
+      c.answer.forEach((v, i) => {
+        const slot = document.getElementById('slot-' + i);
+        slot.textContent = v;
+        slot.classList.remove('wrong-slot');
+        slot.classList.add('correct-slot');
+      });
+    }, 600);
+  }
+
+  handleResult(isRight);
+}
+
+// ──────────────────────────────────────────────
+// RESULT HANDLING
+// ──────────────────────────────────────────────
+function handleResult(isRight) {
+  const world = DATA.worlds.find(w => w.id === state.worldId);
+
+  if (isRight) {
+    state.score++;
+    showFeedback(true);
+    triggerBurst(world.emoji);
+  } else {
+    showFeedback(false);
+  }
+
+  setTimeout(() => {
+    state.current++;
+    if (state.current >= DATA.settings.questionsPerSession) {
+      showResults();
+    } else {
+      renderChallenge();
+    }
+  }, isRight ? 1600 : 2000);
+}
+
+function showFeedback(isRight) {
+  const msgs = {
+    right: ['Amazing! 🎉', 'Correct! ⭐', 'You got it! 🔥', 'Brilliant! 💥', 'Nailed it! 🚀'],
+    wrong: ['Not quite — keep going!', 'Almost! Try the next one!', 'Good try! Keep going!']
+  };
+  const fb = document.getElementById('feedback-bar');
+  const list = isRight ? msgs.right : msgs.wrong;
+  fb.textContent = list[Math.floor(Math.random()*list.length)];
+  fb.className = 'feedback-bar show ' + (isRight ? 'correct' : 'wrong');
+}
+
+// ──────────────────────────────────────────────
+// EMOJI BURST
+// ──────────────────────────────────────────────
+function triggerBurst(baseEmoji) {
+  const layer = document.getElementById('burst-layer');
+  const emojis = [baseEmoji, '⭐', '✨', '🎉', baseEmoji, baseEmoji];
+  const count = 14;
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'burst-emoji';
+      el.textContent = emojis[i % emojis.length];
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.animationDuration = (0.9 + Math.random() * 0.8) + 's';
+      el.style.fontSize = (1.8 + Math.random() * 1.8) + 'rem';
+      layer.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }, i * 60);
+  }
+}
+
+// ──────────────────────────────────────────────
+// RESULTS SCREEN
+// ──────────────────────────────────────────────
+function showResults() {
+  const score = state.score;
+  const t = DATA.settings.starThresholds;
+  const earned = score >= t.three ? 3 : score >= t.two ? 2 : score >= t.one ? 1 : 0;
+
+  // bump streak
+  const streak = bumpStreak();
+
+  // add stars
+  const newTotal = addStarsForWorld(state.worldId, earned);
+
+  // titles
+  const titles = {
+    3: "Incredible, Kane! 🔥",
+    2: "Great work! 🌟",
+    1: "Good try! Keep going!",
+    0: "Keep practising! 💪"
+  };
+  document.getElementById('results-title').textContent = titles[earned] || "Well done!";
+  document.getElementById('score-line').textContent = `You got ${score} out of ${DATA.settings.questionsPerSession}! (+${earned} ⭐)`;
+
+  // stars
+  ['star-1','star-2','star-3'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('earned');
+    el.textContent = i < earned ? '⭐' : '☆';
+    if (i < earned) setTimeout(() => el.classList.add('earned'), 200 + i*200);
+  });
+
+  // check for newly earned reward
+  const world = DATA.worlds.find(w => w.id === state.worldId);
+  const reward = world.rewards
+    .filter(r => r.unlockedAtStars <= newTotal && r.unlockedAtStars > newTotal - earned)
+    .pop();
+
+  const rewardCard = document.getElementById('reward-card');
+  if (reward) {
+    document.getElementById('reward-emoji').textContent = reward.emoji;
+    document.getElementById('reward-name').textContent = `You unlocked ${reward.name}!`;
+    document.getElementById('reward-fact').textContent = reward.fact;
+    rewardCard.classList.add('show');
+    setTimeout(() => triggerBurst(reward.emoji), 500);
+  } else {
+    rewardCard.className = 'reward-card';
+  }
+
+  if (earned >= 2) {
+    setTimeout(() => triggerBurst(world.emoji), 100);
+  }
+
+  showScreen('results');
+}
+
+// ──────────────────────────────────────────────
+// NAVIGATION
+// ──────────────────────────────────────────────
+function playAgain() { startWorld(state.worldId); }
+function goHome() { renderHome(); showScreen('home'); }
+
+// ──────────────────────────────────────────────
+// START
+// ──────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
